@@ -2,6 +2,7 @@
 _evo*
 
 .claude/*
+.agents/*
 CLAUDE.md
 
 docker-compose.local.yaml
