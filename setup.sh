@@ -197,7 +197,7 @@ echo ""
 # Step 6: Seed Auth service (must be first)
 # ---------------------------------------------------------------------------
 info "Seeding Auth service (creating default account and user)..."
-docker compose run --rm evo-auth sh -c "bundle exec rails db:prepare && bundle exec rails db:seed"
+docker compose run --rm evo-auth sh -c "bundle exec rails db:create && bundle exec rails db:migrate && bundle exec rails db:seed"
 success "Auth service seeded"
 
 echo ""
