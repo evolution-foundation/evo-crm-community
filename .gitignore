@@ -1,2 +1,11 @@
 .env
 _evo*
+
+.claude/*
+.agents/*
+CLAUDE.md
+
+docker-compose.local.yaml
+
+# Local-only working copies of sibling enterprise repos (not a submodule).
+evo-crm-enterprise/

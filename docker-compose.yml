@@ -56,12 +56,14 @@ services:
       RAILS_ENV: ${RAILS_ENV:-development}
       REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/1
       POSTGRES_HOST: postgres
+    volumes:
+      - ./evo-auth-service-community/storage:/rails/storage
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: bash -c "bundle install && bundle exec rails db:prepare && bundle exec rails s -p 3001 -b 0.0.0.0"
+    command: bash -c "rm -f /rails/tmp/pids/server.pid && bundle install && bundle exec rails db:prepare && bundle exec rails s -p 3001 -b 0.0.0.0"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
@@ -84,6 +86,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Disable inherited HTTP healthcheck — Sidekiq has no web server.
+    healthcheck:
+      disable: true
     command: bash -c "bundle install && bundle exec sidekiq"
 
   # ---------------------------------------------------------------------------
@@ -115,6 +120,9 @@ services:
       - crm_bundle:/usr/local/bundle
       - crm_node_modules:/app/node_modules
       - crm_cache:/app/tmp/cache
+      # /app/storage is already shared between evo-crm and evo-crm-sidekiq through
+      # the project bind above — no additional named volume needed (a named volume
+      # here would mask the bind and break host visibility of ActiveStorage blobs).
     depends_on:
       postgres:
         condition: service_healthy
@@ -155,11 +163,16 @@ services:
       - crm_bundle:/usr/local/bundle
       - crm_node_modules:/app/node_modules
       - crm_cache:/app/tmp/cache
+      # See evo-crm above — /app/storage is shared via the project bind, no named
+      # volume needed (and one here would mask the bind, hiding blobs from host).
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Disable inherited HTTP healthcheck — Sidekiq has no web server.
+    healthcheck:
+      disable: true
     entrypoint: docker/entrypoints/rails.sh
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
 

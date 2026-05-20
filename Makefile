@@ -44,8 +44,7 @@ setup: ## First-time setup: copy env, build, start, seed
 		sleep 2; \
 	done
 	@echo "$(GREEN)Database is ready!$(RESET)"
-	@$(MAKE) seed-auth
-	@$(MAKE) seed-crm
+	@$(MAKE) seed
 	docker compose up -d
 	@echo ""
 	@echo "$(GREEN)============================================$(RESET)"
@@ -60,8 +59,8 @@ setup: ## First-time setup: copy env, build, start, seed
 	@echo "  Bot Runtime:  http://localhost:8080"
 	@echo "  Mailhog:      http://localhost:8025"
 	@echo ""
-	@echo "  Login:  support@evo-auth-service-community.com"
-	@echo "  Pass:   Password@123"
+	@echo "  First access: http://localhost:5173/setup"
+	@echo "  Create your admin user via the setup wizard."
 	@echo ""
 
 start: ## Start all services
@@ -96,17 +95,22 @@ clean: ## Stop services and remove all data volumes
 
 ## —— Database & Seeds —————————————————————————————————————————————————————————
 
-seed: seed-auth seed-crm ## Run all seeds (auth first, then CRM)
+seed: seed-crm seed-auth ## Run all seeds (CRM schema first, then auth)
+
+seed-crm: ## Create DB + load CRM master schema + mark auth migrations + seed CRM
+	@echo "$(CYAN)Loading CRM schema (master)...$(RESET)"
+	docker compose run --rm evo-crm bundle exec rails db:create db:schema:load
+	@echo "$(CYAN)Marking auth migrations as applied...$(RESET)"
+	docker compose run --rm evo-auth bundle exec rails runner \
+		"Dir['db/migrate/*.rb'].sort.map { |f| File.basename(f).split('_').first }.each { |v| begin; ActiveRecord::Base.connection.schema_migration.create_version(v); rescue ActiveRecord::RecordNotUnique; end }"
+	@echo "$(CYAN)Seeding CRM service...$(RESET)"
+	docker compose run --rm evo-crm bundle exec rails db:seed
+	@echo "$(GREEN)CRM schema loaded and seeded.$(RESET)"
 
 seed-auth: ## Seed the Auth service (creates default user)
 	@echo "$(CYAN)Seeding Auth service...$(RESET)"
-	docker compose run --rm evo-auth bash -c "bundle exec rails db:prepare && bundle exec rails db:seed"
+	docker compose run --rm evo-auth bundle exec rails db:seed
 	@echo "$(GREEN)Auth service seeded.$(RESET)"
-
-seed-crm: ## Seed the CRM service (creates default inbox)
-	@echo "$(CYAN)Seeding CRM service...$(RESET)"
-	docker compose run --rm evo-crm bash -c "bundle exec rails db:prepare && bundle exec rails db:seed"
-	@echo "$(GREEN)CRM service seeded.$(RESET)"
 
 ## —— Shell Access —————————————————————————————————————————————————————————————
 

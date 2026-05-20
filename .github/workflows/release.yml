@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/evolutionapi
+  IMAGE_PREFIX: ghcr.io/evolution-foundation
 
 jobs:
   build-and-push:
@@ -77,6 +77,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Compute Docker tag (strip leading 'v' to match what the per-service workflows publish)
+        id: dockertag
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -84,12 +88,16 @@ jobs:
           body: |
             ## Docker Images
 
-            All images are available on GitHub Container Registry:
+            All images are available on Docker Hub under the `evoapicloud` org. The Docker tag drops the leading `v` (so the git tag `${{ github.ref_name }}` corresponds to the Docker tag `${{ steps.dockertag.outputs.version }}`):
 
             ```bash
-            docker pull ghcr.io/evolutionapi/evo-auth-service-community:${{ github.ref_name }}
-            docker pull ghcr.io/evolutionapi/evo-ai-crm-community:${{ github.ref_name }}
-            docker pull ghcr.io/evolutionapi/evo-ai-frontend-community:${{ github.ref_name }}
-            docker pull ghcr.io/evolutionapi/evo-ai-processor-community:${{ github.ref_name }}
-            docker pull ghcr.io/evolutionapi/evo-ai-core-service-community:${{ github.ref_name }}
+            docker pull evoapicloud/evo-auth-service-community:${{ steps.dockertag.outputs.version }}
+            docker pull evoapicloud/evo-ai-crm-community:${{ steps.dockertag.outputs.version }}
+            docker pull evoapicloud/evo-ai-frontend-community:${{ steps.dockertag.outputs.version }}
+            docker pull evoapicloud/evo-ai-processor-community:${{ steps.dockertag.outputs.version }}
+            docker pull evoapicloud/evo-ai-core-service-community:${{ steps.dockertag.outputs.version }}
+            docker pull evoapicloud/evo-bot-runtime:${{ steps.dockertag.outputs.version }}
+            docker pull evoapicloud/evo-crm-gateway:${{ steps.dockertag.outputs.version }}
             ```
+
+            Or, equivalently, `:latest` always tracks the most recent tagged release.

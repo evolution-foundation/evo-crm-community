@@ -66,7 +66,7 @@ services:
   # ---------------------------------------------------------------------------
   evo_auth:
     image: evoapicloud/evo-auth-service-community:latest
-    command: bash -c "bundle exec rails db:migrate 2>&1 || echo 'Migration had errors, continuing...'; bundle exec rails s -p 3001 -b 0.0.0.0"
+    command: sh -c "bundle exec rails db:migrate 2>&1 || echo 'Migration had errors, continuing...'; bundle exec rails s -p 3001 -b 0.0.0.0"
     environment:
       RAILS_ENV: production
       RAILS_MAX_THREADS: 5
@@ -112,6 +112,11 @@ services:
   evo_auth_sidekiq:
     image: evoapicloud/evo-auth-service-community:latest
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    # The auth-service image ships a HEALTHCHECK that hits :3001/health (Puma).
+    # Sidekiq does not run a HTTP server, so the inherited healthcheck always
+    # fails and Swarm kills the container in a ~2-minute loop. Disable it here.
+    healthcheck:
+      disable: true
     environment:
       RAILS_ENV: production
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
@@ -195,6 +200,10 @@ services:
   evo_crm_sidekiq:
     image: evoapicloud/evo-ai-crm-community:latest
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    # CRM image inherits a healthcheck that targets :3000/health (Puma) —
+    # Sidekiq has no HTTP server, so disable to avoid the kill-respawn loop.
+    healthcheck:
+      disable: true
     environment:
       RAILS_ENV: production
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
