@@ -1,6 +1,8 @@
 .env
 _evo*
 
+.claude
+.claude/
 .claude/*
 .agents/*
 CLAUDE.md
