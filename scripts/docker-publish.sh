@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# docker-publish.sh — Build e push de todas as imagens para Docker Hub
+# docker-publish.sh — Build e push multi-arch (amd64 + arm64) para Docker Hub
 # =============================================================================
 # Uso:
 #   ./scripts/docker-publish.sh                    # build + push latest + versão atual
@@ -10,6 +10,7 @@
 #
 # Pré-requisitos:
 #   docker login -u lc1868
+#   docker buildx inspect evo-multiarch --bootstrap  # builder multi-arch ativo
 # =============================================================================
 
 set -euo pipefail
@@ -76,16 +77,15 @@ build_and_push() {
   echo "  VERSION: ${ver}"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-  run docker build \
-    --platform linux/amd64 \
+  run docker buildx build \
+    --builder evo-multiarch \
+    --platform linux/amd64,linux/arm64 \
+    --push \
     -f "${REPO_ROOT}/${context}/${dockerfile}" \
     -t "${full_name}:${ver}" \
     -t "${full_name}:latest" \
     "${extra_args[@]}" \
     "${REPO_ROOT}/${context}"
-
-  run docker push "${full_name}:${ver}"
-  run docker push "${full_name}:latest"
 }
 
 # =============================================================================
