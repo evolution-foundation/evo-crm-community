@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # Submodules (orquestrador)
+  - package-ecosystem: "gitsubmodules"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "submodules"
+    commit-message:
+      prefix: "chore(submodules)"
+
+  # Docker images
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(docker)"
