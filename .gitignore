@@ -9,3 +9,9 @@ CLAUDE.md
 
 # Local-only working copies of sibling enterprise repos (not a submodule).
 evo-crm-enterprise/
+
+# Sibling repos cloned locally but not registered in .gitmodules. They were
+# accidentally tracked as orphan gitlinks before; ignore the dirs so nobody
+# re-adds them with `git add`.
+bms-monorepo/
+evo-ai-docs/
