@@ -60,27 +60,20 @@ jobs:
   event-names-sync:
     name: EvoFlow event-names sync
     runs-on: ubuntu-latest
-    # No `paths:` filter at the workflow level (the workflow guards other jobs
-    # too), so this job short-circuits via a path check when nothing relevant
-    # changed. Cost is one ~5s job otherwise.
+    # Always-on (~5s of pure bash). The previous "Detect relevant changes"
+    # gate filtered by file paths, which was silently skipped on the workflow
+    # that needs the gate the most: submodule-pointer bumps. `git diff
+    # --name-only` for a bump emits the submodule directory as a bare line
+    # (e.g. `evo-ai-crm-community`), which the `^evo-ai-crm-community/lib/…`
+    # regex did not match — so the check was bypassed precisely when one
+    # submodule moved to a new event_names list and the other did not.
+    # Cheaper to run unconditionally than to chase regex coverage for every
+    # diff shape git can emit.
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Detect relevant changes
-        id: changed
-        run: |
-          base="${{ github.event.pull_request.base.sha }}"
-          head="${{ github.event.pull_request.head.sha }}"
-          if git diff --name-only "$base...$head" | grep -E '^(evo-ai-crm-community/lib/events/|evo-flow/src/modules/events/|scripts/check-event-names-sync\.sh|\.github/workflows/ci\.yml)' >/dev/null; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "No event-names-related files changed — skipping sync check."
-          fi
-
       - name: Check event_names sync
-        if: steps.changed.outputs.run == 'true'
         run: bash scripts/check-event-names-sync.sh
