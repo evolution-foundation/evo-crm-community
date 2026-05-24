@@ -13,6 +13,7 @@ Este documento define a origem correta das imagens Docker (o "Registry") para o 
 | **Bot Runtime** | `lc1868` | `lc1868/evo-bot-runtime` | `1.0.0` | Ajustes do motor de bot. |
 | **Frontend** | `lc1868` | `lc1868/evo-ai-frontend-community` | `1.0.0` | Ajustes visuais, features desabilitadas / editadas. |
 | **CRM / CRM Sidekiq** | `evoapicloud`| `evoapicloud/evo-ai-crm-community`| `latest` | **Não modificado em código.** Usando upstream puro. |
+| **Evolution GO (WhatsApp)** | `lc1868` | `lc1868/evolution-go` | `0.7.1-proxyhealth` | Fork com logs/status de proxy health (usar quando o deploy incluir o Evolution GO). |
 
 ## Regras de Operação para Agentes e CI/CD
 

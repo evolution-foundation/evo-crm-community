@@ -138,6 +138,17 @@ Formato de entrada:
   - Conflito no sync: baixo — arquivo local novo já introduzido pelo white-label.
   - Branch: `develop`
 
+---
+
+## [2026-05-20] Proxy health + logs no container — evolution-go
+
+### Submodule `evolution-go` → fork `Luizcc87/evolution-go`
+
+- **Arquivos**: `pkg/instance/service/instance_service.go`, `pkg/routes/routes.go`, `pkg/instance/handler/instance_handler.go`, `pkg/config/*`, `pkg/instance/model/instance_model.go`
+  - Motivo: Adicionar monitor periódico de conectividade do proxy por instância, registrando logs no stdout do container (prefixo `[proxy-health]`) e expondo status via API.
+  - Conflito no sync: médio — mudanças em core/service/handler e novos endpoints. Revisar ao atualizar para versões futuras do upstream.
+  - Branch: `feat/proxy-health` (código) / `release/lc1868-proxy-health` (stack/documentação para deploy)
+
 - **Arquivo**: `src/branding/config.ts`
   - Motivo: Centralizar `logoUrl` e `faviconUrl` e aplicar sincronização de favicon com fallback para `/favicon.svg`.
   - Conflito no sync: baixo — arquivo local novo em diretório dedicado.
