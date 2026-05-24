@@ -290,8 +290,14 @@ services:
       VITE_WS_URL: ${VITE_WS_URL:-http://localhost:3000}
       VITE_EVOAI_API_URL: ${VITE_EVOAI_API_URL:-http://localhost:5555}
       VITE_AGENT_PROCESSOR_URL: ${VITE_AGENT_PROCESSOR_URL:-http://localhost:8000}
+      APP_NAME: ${APP_NAME:-Evo CRM}
+      APP_TITLE: ${APP_TITLE:-Evo CRM}
+      APP_LOGO_URL: ${APP_LOGO_URL:-}
+      APP_FAVICON_URL: ${APP_FAVICON_URL:-}
     ports:
       - "5173:80"
+    volumes:
+      - ${BRANDING_ASSETS_PATH:-/dev/null}:/usr/share/nginx/html/branding:ro
     depends_on:
       evo-auth:
         condition: service_healthy

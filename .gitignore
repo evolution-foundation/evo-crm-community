@@ -6,6 +6,7 @@ _evo*
 CLAUDE.md
 
 docker-compose.local.yaml
+branding/
 
 # Local-only working copies of sibling enterprise repos (not a submodule).
 evo-crm-enterprise/
