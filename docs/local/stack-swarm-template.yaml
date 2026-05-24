@@ -1,0 +1,360 @@
+version: "3.8"
+
+# =============================================================================
+# Evo CRM Community — Stack Template para Docker Swarm / Portainer
+# =============================================================================
+# Substitua todos os valores marcados com <PLACEHOLDER> antes de fazer deploy.
+#
+# Guia de configuração white-label: docs/white-label-guide.md
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# VALORES QUE DEVEM SER IGUAIS EM TODOS OS SERVIÇOS
+#   SECRET_KEY_BASE / JWT_SECRET_KEY / DOORKEEPER_JWT_SECRET_KEY
+#     → mesmo valor (gere com: openssl rand -hex 64)
+#   EVOAI_CRM_API_TOKEN
+#     → gere com: openssl rand -hex 16 ou uuidgen
+#   ENCRYPTION_KEY
+#     → gere com: openssl rand -base64 32
+# ---------------------------------------------------------------------------
+
+services:
+
+  # ── Gateway ──────────────────────────────────────────────────────────────
+  evo_gateway:
+    image: lc1868/evo-crm-gateway:latest
+    environment:
+      AUTH_UPSTREAM: "evo_auth:3001"
+      CRM_UPSTREAM: "evo_crm:3000"
+      CORE_UPSTREAM: "evo_core:5555"
+      PROCESSOR_UPSTREAM: "evo_processor:8000"
+      BOT_RUNTIME_UPSTREAM: "evo_bot_runtime:8080"
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=network_swarm_public
+        - traefik.http.routers.evo_gateway.rule=Host(`<API_DOMAIN>`)
+        - traefik.http.routers.evo_gateway.entrypoints=websecure
+        - traefik.http.routers.evo_gateway.tls.certresolver=letsencryptresolver
+        - traefik.http.services.evo_gateway.loadbalancer.server.port=3030
+        - traefik.http.services.evo_gateway.loadbalancer.passHostHeader=true
+
+  # ── Auth Service ──────────────────────────────────────────────────────────
+  evo_auth:
+    image: lc1868/evo-auth-service-community:1.0.0-rc3
+    command: sh -c "bundle exec rails db:migrate 2>&1 || echo 'Migration had errors, continuing...'; bundle exec rails s -p 3001 -b 0.0.0.0"
+    environment:
+      RAILS_ENV: production
+      RAILS_MAX_THREADS: "5"
+
+      # ── Segredos (MESMOS em auth, crm, core) ──
+      SECRET_KEY_BASE: "<SECRET_KEY_BASE>"
+      JWT_SECRET_KEY: "<SECRET_KEY_BASE>"
+      DOORKEEPER_JWT_SECRET_KEY: "<SECRET_KEY_BASE>"
+      DOORKEEPER_JWT_ALGORITHM: "hs256"
+      DOORKEEPER_JWT_ISS: "evo-auth-service"
+      EVOAI_CRM_API_TOKEN: "<EVOAI_CRM_API_TOKEN>"
+
+      # ── Banco ──
+      POSTGRES_HOST: "<POSTGRES_HOST>"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USERNAME: "<POSTGRES_USERNAME>"
+      POSTGRES_PASSWORD: "<POSTGRES_PASSWORD>"
+      POSTGRES_DATABASE: "<POSTGRES_DATABASE>"
+      POSTGRES_SSLMODE: "disable"
+
+      # ── Redis ──
+      REDIS_URL: "redis://:<REDIS_PASSWORD>@<REDIS_HOST>:6379/1"
+
+      # ── URLs públicas ──
+      FRONTEND_URL: "https://<FRONTEND_DOMAIN>"
+      BACKEND_URL: "https://<API_DOMAIN>"
+      AUTH_SERVICE_URL: "https://<API_DOMAIN>"
+      CORS_ORIGINS: "https://<FRONTEND_DOMAIN>,https://<API_DOMAIN>"
+
+      # ── Email ──
+      MAILER_SENDER_EMAIL: "<MAILER_SENDER_EMAIL>"
+      SMTP_ADDRESS: "<SMTP_ADDRESS>"
+      SMTP_PORT: "587"
+      SMTP_DOMAIN: "<SMTP_DOMAIN>"
+      SMTP_AUTHENTICATION: "plain"
+      SMTP_ENABLE_STARTTLS_AUTO: "true"
+      SMTP_USERNAME: "<SMTP_USERNAME>"
+      SMTP_PASSWORD: "<SMTP_PASSWORD>"
+
+      # ── White Label — identidade da instância ──
+      APP_NAME: "<APP_NAME>"
+      APP_TITLE: "<APP_TITLE>"
+      APP_DOMAIN: "<APP_DOMAIN>"
+      ACCOUNT_NAME: "<ACCOUNT_NAME>"
+      SUPPORT_EMAIL: "<SUPPORT_EMAIL>"
+      ACCOUNT_LOCALE: "pt"
+
+      # ── Misc ──
+      MFA_ISSUER: "<APP_NAME>"
+      SIDEKIQ_CONCURRENCY: "10"
+      ACTIVE_STORAGE_SERVICE: "local"
+
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+
+  evo_auth_sidekiq:
+    image: lc1868/evo-auth-service-community:1.0.0-rc3
+    command: sh -c "bundle exec sidekiq"
+    healthcheck:
+      disable: true
+    environment:
+      RAILS_ENV: production
+      RAILS_MAX_THREADS: "5"
+      SECRET_KEY_BASE: "<SECRET_KEY_BASE>"
+      JWT_SECRET_KEY: "<SECRET_KEY_BASE>"
+      DOORKEEPER_JWT_SECRET_KEY: "<SECRET_KEY_BASE>"
+      DOORKEEPER_JWT_ALGORITHM: "hs256"
+      DOORKEEPER_JWT_ISS: "evo-auth-service"
+      EVOAI_CRM_API_TOKEN: "<EVOAI_CRM_API_TOKEN>"
+      POSTGRES_HOST: "<POSTGRES_HOST>"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USERNAME: "<POSTGRES_USERNAME>"
+      POSTGRES_PASSWORD: "<POSTGRES_PASSWORD>"
+      POSTGRES_DATABASE: "<POSTGRES_DATABASE>"
+      POSTGRES_SSLMODE: "disable"
+      REDIS_URL: "redis://:<REDIS_PASSWORD>@<REDIS_HOST>:6379/1"
+      FRONTEND_URL: "https://<FRONTEND_DOMAIN>"
+      BACKEND_URL: "https://<API_DOMAIN>"
+      CORS_ORIGINS: "https://<FRONTEND_DOMAIN>,https://<API_DOMAIN>"
+      MAILER_SENDER_EMAIL: "<MAILER_SENDER_EMAIL>"
+      SMTP_ADDRESS: "<SMTP_ADDRESS>"
+      SMTP_PORT: "587"
+      SMTP_DOMAIN: "<SMTP_DOMAIN>"
+      SMTP_AUTHENTICATION: "plain"
+      SMTP_ENABLE_STARTTLS_AUTO: "true"
+      SMTP_USERNAME: "<SMTP_USERNAME>"
+      SMTP_PASSWORD: "<SMTP_PASSWORD>"
+      MFA_ISSUER: "<APP_NAME>"
+      SIDEKIQ_CONCURRENCY: "10"
+      ACTIVE_STORAGE_SERVICE: "local"
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+
+  # ── CRM Service ───────────────────────────────────────────────────────────
+  evo_crm:
+    image: lc1868/evo-ai-crm-community:latest
+    command: sh -c "bundle exec rails db:migrate || true && bundle exec rails s -p 3000 -b 0.0.0.0"
+    environment:
+      RAILS_ENV: production
+      RAILS_SERVE_STATIC_FILES: "true"
+      RAILS_LOG_TO_STDOUT: "true"
+      SECRET_KEY_BASE: "<SECRET_KEY_BASE>"
+      JWT_SECRET_KEY: "<SECRET_KEY_BASE>"
+      EVOAI_CRM_API_TOKEN: "<EVOAI_CRM_API_TOKEN>"
+      POSTGRES_HOST: "<POSTGRES_HOST>"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USERNAME: "<POSTGRES_USERNAME>"
+      POSTGRES_PASSWORD: "<POSTGRES_PASSWORD>"
+      POSTGRES_DATABASE: "<POSTGRES_DATABASE>"
+      POSTGRES_SSLMODE: "disable"
+      REDIS_URL: "redis://:<REDIS_PASSWORD>@<REDIS_HOST>:6379/1"
+      EVO_AUTH_SERVICE_URL: "http://evo_auth:3001"
+      EVO_AI_CORE_SERVICE_URL: "http://evo_core:5555"
+      BACKEND_URL: "https://<API_DOMAIN>"
+      FRONTEND_URL: "https://<FRONTEND_DOMAIN>"
+      CORS_ORIGINS: "https://<FRONTEND_DOMAIN>,https://<API_DOMAIN>"
+      DISABLE_TELEMETRY: "true"
+      LOG_LEVEL: "info"
+      ENABLE_ACCOUNT_SIGNUP: "true"
+      ENABLE_PUSH_RELAY_SERVER: "true"
+      ENABLE_INBOX_EVENTS: "true"
+      BOT_RUNTIME_URL: "http://evo_bot_runtime:8080"
+      BOT_RUNTIME_SECRET: "<BOT_RUNTIME_SECRET>"
+      BOT_RUNTIME_POSTBACK_BASE_URL: "http://evo_crm:3000"
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+
+  evo_crm_sidekiq:
+    image: lc1868/evo-ai-crm-community:latest
+    command: sh -c "bundle exec sidekiq"
+    healthcheck:
+      disable: true
+    environment:
+      RAILS_ENV: production
+      RAILS_SERVE_STATIC_FILES: "true"
+      RAILS_LOG_TO_STDOUT: "true"
+      SECRET_KEY_BASE: "<SECRET_KEY_BASE>"
+      JWT_SECRET_KEY: "<SECRET_KEY_BASE>"
+      EVOAI_CRM_API_TOKEN: "<EVOAI_CRM_API_TOKEN>"
+      POSTGRES_HOST: "<POSTGRES_HOST>"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USERNAME: "<POSTGRES_USERNAME>"
+      POSTGRES_PASSWORD: "<POSTGRES_PASSWORD>"
+      POSTGRES_DATABASE: "<POSTGRES_DATABASE>"
+      POSTGRES_SSLMODE: "disable"
+      REDIS_URL: "redis://:<REDIS_PASSWORD>@<REDIS_HOST>:6379/1"
+      EVO_AUTH_SERVICE_URL: "http://evo_auth:3001"
+      EVO_AI_CORE_SERVICE_URL: "http://evo_core:5555"
+      BACKEND_URL: "https://<API_DOMAIN>"
+      FRONTEND_URL: "https://<FRONTEND_DOMAIN>"
+      CORS_ORIGINS: "https://<FRONTEND_DOMAIN>,https://<API_DOMAIN>"
+      DISABLE_TELEMETRY: "true"
+      LOG_LEVEL: "info"
+      ENABLE_ACCOUNT_SIGNUP: "true"
+      ENABLE_PUSH_RELAY_SERVER: "true"
+      ENABLE_INBOX_EVENTS: "true"
+      BOT_RUNTIME_URL: "http://evo_bot_runtime:8080"
+      BOT_RUNTIME_SECRET: "<BOT_RUNTIME_SECRET>"
+      BOT_RUNTIME_POSTBACK_BASE_URL: "http://evo_crm:3000"
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+
+  # ── Core Service ──────────────────────────────────────────────────────────
+  evo_core:
+    image: lc1868/evo-ai-core-service-community:latest
+    environment:
+      DB_HOST: "<POSTGRES_HOST>"
+      DB_PORT: "5432"
+      DB_USER: "<POSTGRES_USERNAME>"
+      DB_PASSWORD: "<POSTGRES_PASSWORD>"
+      DB_NAME: "<POSTGRES_DATABASE>"
+      DB_SSLMODE: "disable"
+      DB_MAX_IDLE_CONNS: "10"
+      DB_MAX_OPEN_CONNS: "100"
+      DB_CONN_MAX_LIFETIME: "1h"
+      DB_CONN_MAX_IDLE_TIME: "30m"
+      PORT: "5555"
+      SECRET_KEY_BASE: "<SECRET_KEY_BASE>"
+      JWT_SECRET_KEY: "<SECRET_KEY_BASE>"
+      JWT_ALGORITHM: "HS256"
+      ENCRYPTION_KEY: "<ENCRYPTION_KEY>"
+      EVOLUTION_BASE_URL: "http://evo_crm:3000"
+      EVO_AUTH_BASE_URL: "http://evo_auth:3001"
+      AI_PROCESSOR_URL: "http://evo_processor:8000"
+      AI_PROCESSOR_VERSION: "v1"
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+
+  # ── Processor Service ─────────────────────────────────────────────────────
+  evo_processor:
+    image: lc1868/evo-ai-processor-community:latest
+    command: sh -c "alembic stamp head || echo 'Already stamped'; alembic upgrade head || echo 'Migration skipped'; python -m scripts.run_seeders || echo 'Seeders skipped'; uvicorn src.main:app --host 0.0.0.0 --port 8000"
+    environment:
+      POSTGRES_CONNECTION_STRING: "postgresql://<POSTGRES_USERNAME>:<POSTGRES_PASSWORD>@<POSTGRES_HOST>:5432/<POSTGRES_DATABASE>"
+      REDIS_HOST: "<REDIS_HOST>"
+      REDIS_PORT: "6379"
+      REDIS_DB: "0"
+      REDIS_SSL: "false"
+      REDIS_KEY_PREFIX: "a2a:"
+      REDIS_TTL: "3600"
+      HOST: "0.0.0.0"
+      PORT: "8000"
+      DEBUG: "false"
+      SECRET_KEY_BASE: "<SECRET_KEY_BASE>"
+      ENCRYPTION_KEY: "<ENCRYPTION_KEY>"
+      EVOAI_CRM_API_TOKEN: "<EVOAI_CRM_API_TOKEN>"
+      EVO_AI_CRM_URL: "http://evo_crm:3000"
+      CORE_SERVICE_URL: "http://evo_core:5555/api/v1"
+      APP_URL: "https://<API_DOMAIN>"
+      API_URL: "https://<API_DOMAIN>"
+
+      # ── White Label — identidade exibida na UI do Processor ──
+      API_TITLE: "<APP_NAME> — Agent Processor"
+      API_DESCRIPTION: "Agent Processor for <APP_NAME>"
+      API_VERSION: "1.0.0"
+      ORGANIZATION_NAME: "<ACCOUNT_NAME>"
+
+      TOOLS_CACHE_ENABLED: "true"
+      TOOLS_CACHE_TTL: "3600"
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+
+  # ── Bot Runtime ───────────────────────────────────────────────────────────
+  evo_bot_runtime:
+    image: lc1868/evo-bot-runtime:latest
+    environment:
+      LISTEN_ADDR: "0.0.0.0:8080"
+      REDIS_URL: "redis://:<REDIS_PASSWORD>@<REDIS_HOST>:6379/1"
+      AI_PROCESSOR_URL: "http://evo_processor:8000"
+      BOT_RUNTIME_SECRET: "<BOT_RUNTIME_SECRET>"
+      AI_CALL_TIMEOUT_SECONDS: "30"
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+
+  # ── Frontend ──────────────────────────────────────────────────────────────
+  evo_frontend:
+    image: lc1868/evo-ai-frontend-community:1.0.0-rc3
+    environment:
+      VITE_APP_ENV: "production"
+      VITE_API_URL: "https://<API_DOMAIN>"
+      VITE_AUTH_API_URL: "https://<API_DOMAIN>"
+      VITE_WS_URL: "wss://<API_DOMAIN>"
+      VITE_EVOAI_API_URL: "https://<API_DOMAIN>"
+      VITE_AGENT_PROCESSOR_URL: "https://<API_DOMAIN>"
+
+      # ── White Label — runtime injection no boot do container ──
+      # O branding-entrypoint.sh substitui placeholders em HTML/JS ao iniciar.
+      APP_NAME: "<APP_NAME>"
+      APP_TITLE: "<APP_TITLE>"
+      # URL pública da logo (deixar vazio = logo padrão Evolution)
+      APP_LOGO_URL: "<APP_LOGO_URL>"
+      # URL pública do favicon (deixar vazio = fallback para APP_LOGO_URL)
+      APP_FAVICON_URL: "<APP_FAVICON_URL>"
+      # Link "Documentação" no rodapé da sidebar (vazio = oculta o link)
+      APP_DOCS_URL: "<APP_DOCS_URL>"
+      # Link "Preciso de suporte" no rodapé da sidebar (vazio = oculta o link)
+      # Aceita qualquer URL: WhatsApp, mailto:, Zendesk, etc.
+      APP_SUPPORT_URL: "<APP_SUPPORT_URL>"
+      # Texto de copyright no rodapé da sidebar
+      # Exemplo: "© 2026 Minha Empresa. Todos os direitos reservados."
+      # Vazio = usa padrão i18n: "© <ano> Evolution Foundation. All rights reserved."
+      APP_COPYRIGHT: "<APP_COPYRIGHT>"
+
+    # volumes:
+    #   # Montar assets locais de branding (opcional — remova se usar APP_LOGO_URL)
+    #   - /caminho/local/branding:/usr/share/nginx/html/branding:ro
+
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=network_swarm_public
+        - traefik.http.routers.evo_frontend.rule=Host(`<FRONTEND_DOMAIN>`)
+        - traefik.http.routers.evo_frontend.entrypoints=websecure
+        - traefik.http.routers.evo_frontend.tls.certresolver=letsencryptresolver
+        - traefik.http.services.evo_frontend.loadbalancer.server.port=80
+        - traefik.http.services.evo_frontend.loadbalancer.passHostHeader=true
+
+networks:
+  network_swarm_public:
+    external: true
+
+# =============================================================================
+# CHECKLIST DE DEPLOY
+# =============================================================================
+# [ ] Substituir TODOS os <PLACEHOLDER> antes do deploy
+# [ ] SECRET_KEY_BASE / JWT_SECRET_KEY / DOORKEEPER_JWT_SECRET_KEY = mesmo valor
+#     Gerar: openssl rand -hex 64
+# [ ] ENCRYPTION_KEY: openssl rand -base64 32
+# [ ] EVOAI_CRM_API_TOKEN: openssl rand -hex 16
+# [ ] BOT_RUNTIME_SECRET: openssl rand -hex 24
+# [ ] REDIS_PASSWORD: senha do Redis (mesma em todos os serviços)
+# [ ] Revisar APP_LOGO_URL e APP_FAVICON_URL ou configurar volume de branding
+# [ ] Conferir <FRONTEND_DOMAIN> e <API_DOMAIN> nos labels do Traefik
+# [ ] Confirmar rede `network_swarm_public` existe no Swarm
+# =============================================================================
