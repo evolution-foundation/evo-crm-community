@@ -1,0 +1,28 @@
+From 62f4723309184f90236e59e6459960615d3927e4 Mon Sep 17 00:00:00 2001
+From: Luiz Carlos Ceconi <luizcceconi@gmail.com>
+Date: Fri, 22 May 2026 22:36:33 -0300
+Subject: [PATCH] custom: add runtime branding placeholders to index
+
+White-label patch to inject app title and favicon at runtime in the upstream frontend index file.
+---
+ index.html | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/index.html b/index.html
+index 86fd2b2..89305a8 100644
+--- a/index.html
++++ b/index.html
+@@ -3,8 +3,8 @@
+   <head>
+     <meta charset="UTF-8" />
+     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+-    <title>Evo CRM</title>
++    <link rel="icon" type="image/svg+xml" href="__APP_FAVICON_URL_PLACEHOLDER__" />
++    <title>__APP_TITLE_PLACEHOLDER__</title>
+   </head>
+   <body>
+     <div id="root"></div>
+-- 
+2.52.0.windows.1
+

@@ -1,0 +1,23 @@
+From 6afe2e47d2bdd9a3b40a1a60ac95bf79163da6a1 Mon Sep 17 00:00:00 2001
+From: Luiz Carlos Ceconi <luizcceconi@gmail.com>
+Date: Fri, 22 May 2026 22:36:34 -0300
+Subject: [PATCH] custom: require white-label seed from main seeds file
+
+Minimal white-label patch to load the isolated white_label seed from the upstream auth seed entrypoint.
+---
+ db/seeds.rb | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/db/seeds.rb b/db/seeds.rb
+index da6a78c..9b2eaf7 100644
+--- a/db/seeds.rb
++++ b/db/seeds.rb
+@@ -27,3 +27,5 @@ puts "✅ Account config: #{RuntimeConfig.account['name']} (ID: #{RuntimeConfig.
+ 
+ puts ""
+ puts "🚀 Run the setup wizard at /setup to create the first admin user."
++
++require_relative 'seeds/white_label'
+-- 
+2.52.0.windows.1
+

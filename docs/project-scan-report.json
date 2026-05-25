@@ -1,0 +1,56 @@
+{
+  "workflow_version": "1.2.0",
+  "timestamps": {
+    "started": "2026-05-22T00:00:00Z",
+    "last_updated": "2026-05-22T00:00:00Z",
+    "completed": "2026-05-22T00:00:00Z"
+  },
+  "mode": "initial_scan",
+  "scan_level": "deep",
+  "project_root": "D:/Projetos Dev/Luiz/evo-ai/evo-crm-community",
+  "project_knowledge": "D:/Projetos Dev/Luiz/evo-ai/evo-crm-community/docs",
+  "completed_steps": [
+    {"step": "step_0.5", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "Loaded documentation requirements for 12 project types"},
+    {"step": "step_1", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "Classified as monorepo with 6 application parts + 4 companion submodules"},
+    {"step": "step_2", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "Found CONTEXT.md, CLAUDE.md, AGENTS.md, CHANGELOG.md, docs/SYNC.md, docs/CHANGES-LOCAL.md"},
+    {"step": "step_3", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "Tech stack: Ruby 3.4/Rails 7.1 (CRM+Auth), React 19/Vite 6 (Frontend), Go 1.24/Gin (Core+Bot), Python/FastAPI (Processor)"},
+    {"step": "step_4", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "APIs scanned, data models identified, branding audit complete, upstream diff mapped"},
+    {"step": "step_5", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "Source tree with overlay vs upstream classification"},
+    {"step": "step_6", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "Dev setup (make targets), deployment (Portainer Swarm, Docker Hub lc1868/*) documented"},
+    {"step": "step_7", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "6 integration points documented (frontend→crm, crm→auth, crm→core, crm→processor, crm→bot, bot→whatsapp)"},
+    {"step": "step_8", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "Architecture doc written covering all 6 parts"},
+    {"step": "step_9", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "project-overview, development-guide, deployment-guide, white-label-analysis, upstream-sync-analysis written"},
+    {"step": "step_10", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "Master index generated"},
+    {"step": "step_11", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "All docs validated, no incomplete markers"},
+    {"step": "step_12", "status": "completed", "timestamp": "2026-05-22T00:00:00Z", "summary": "Workflow complete"}
+  ],
+  "current_step": "completed",
+  "project_types": [
+    {"part_id": "evo-ai-frontend-community", "project_type_id": "web", "display_name": "React SPA Frontend"},
+    {"part_id": "evo-ai-crm-community", "project_type_id": "backend", "display_name": "Rails CRM Backend"},
+    {"part_id": "evo-auth-service-community", "project_type_id": "backend", "display_name": "Rails Auth Service"},
+    {"part_id": "evo-ai-core-service-community", "project_type_id": "backend", "display_name": "Go Core Service"},
+    {"part_id": "evo-ai-processor-community", "project_type_id": "backend", "display_name": "Python FastAPI Processor"},
+    {"part_id": "evo-bot-runtime", "project_type_id": "backend", "display_name": "Go Bot Runtime"}
+  ],
+  "findings": {
+    "project_classification": "monorepo, 6 application parts + 4 companion submodules, fork/overlay of EvolutionAPI/evo-crm-community",
+    "technology_stack": "Ruby 3.4/Rails 7.1 (x2), React 19/TypeScript/Vite 6, Go 1.24/Gin (x2), Python/FastAPI, PostgreSQL 16+pgvector, Redis, Sidekiq",
+    "branding_items_found": 9,
+    "submodules_modified": 4,
+    "upstream_conflict_risk": "high for docker-compose.yml, evo-ai-crm-community (110 commits), evo-ai-frontend-community (130 commits)"
+  },
+  "outputs_generated": [
+    "project-scan-report.json",
+    "project-overview.md",
+    "architecture.md",
+    "source-tree-analysis.md",
+    "integration-architecture.md",
+    "development-guide.md",
+    "deployment-guide.md",
+    "white-label-analysis.md",
+    "upstream-sync-analysis.md",
+    "index.md"
+  ],
+  "resume_instructions": "Workflow complete — use deep-dive mode for specific areas"
+}

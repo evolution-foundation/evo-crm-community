@@ -105,6 +105,7 @@ declare -a IMAGE_LIST=(
   "evo-crm-gateway|nginx|Dockerfile|nginx"
   "evo-nexus-dashboard|evo-nexus/site|Dockerfile|evo-nexus"
   "evo-nexus-runtime|evo-nexus|Dockerfile|evo-nexus"
+  "evo-flow|evo-flow|Dockerfile|evo-flow"
 )
 
 # =============================================================================
