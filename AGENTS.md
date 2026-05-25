@@ -121,6 +121,10 @@ Ver `.agent/skills/evo-upstream-sync/SKILL.md` para procedimento completo de syn
 | `.agent/skills/evo-upstream-sync/references/agent-integration.md` | Quando cada agente evo-* deve invocar o sync |
 | `.agent/skills/evo-commit-submodules/SKILL.md` | Mapeia mudanças por repositório e commita/pusha para cada fork |
 | `.agent/skills/evo-commit-submodules/scripts/scan-changes.ps1` | Lista arquivos modificados/untracked em todos os submodules |
+| `.agent/skills/evo-docker-publish/SKILL.md` | Orquestra build multi-arch e push para lc1868/* no Docker Hub |
+| `.agent/skills/evo-docker-publish/scripts/preflight.ps1` | Verifica pré-requisitos antes do build (builder, login, submodules) |
+| `docs/local/IMAGE_REGISTRY_MAP.md` | Source of truth: qual registry usar por serviço |
+| `logs/docker-publish-<timestamp>.log` | Log gerado automaticamente a cada execução do docker-publish.sh |
 | `docs/CHANGES-LOCAL.md` | Registro de todas as customizações locais em submodules |
 | `docs/local/stack-swarm-vps.yaml` | Stack de produção atual (Portainer Swarm) |
 | `docs/local/IMAGE_REGISTRY_MAP.md` | Mapeamento de imagens originais → `lc1868/*` |

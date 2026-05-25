@@ -1,26 +1,82 @@
 # Source of Truth: Registry de Imagens (Fork vs Upstream)
 
-Este documento define a origem correta das imagens Docker (o "Registry") para o deployment do Evo-CRM Community neste fork local. Como temos customizações específicas, algumas imagens precisam obrigatoriamente ser construídas e providas pela conta local (`lc1868`) enquanto as que não sofreram alterações em código-fonte são puxadas diretamente da origem oficial (`evoapicloud`).
+Define qual registry usar por serviço. Consultar antes de alterar qualquer `image:` no compose ou stack Swarm.
 
-## Mapa de Imagens (Atualizado)
+**Última atualização**: 2026-05-25 (rc4 sync — CRM passou a ter customização local)
 
-| Microserviço | Registry Alvo | Nome da Imagem | Tag | Motivo / Observação |
-| :--- | :--- | :--- | :--- | :--- |
-| **Gateway** (Nginx) | `lc1868` | `lc1868/evo-crm-gateway` | `1.0.0` | Container modificado localmente. |
-| **Auth** | `lc1868` | `lc1868/evo-auth-service-community` | `1.0.0` | Customizações na autenticação e sidekiq. |
-| **Core** (Go) | `lc1868` | `lc1868/evo-ai-core-service-community` | `1.0.0` | Ajustes e conexões com banco local. |
-| **Processor** (Python)| `lc1868` | `lc1868/evo-ai-processor-community`| `1.0.0` | Driver DB assíncrono ajustado, migrations custom. |
-| **Bot Runtime** | `lc1868` | `lc1868/evo-bot-runtime` | `1.0.0` | Ajustes do motor de bot. |
-| **Frontend** | `lc1868` | `lc1868/evo-ai-frontend-community` | `1.0.0` | Ajustes visuais, features desabilitadas / editadas. |
-| **CRM / CRM Sidekiq** | `evoapicloud`| `evoapicloud/evo-ai-crm-community`| `latest` | **Não modificado em código.** Usando upstream puro. |
-| **Evolution GO (WhatsApp)** | `lc1868` | `lc1868/evolution-go` | `0.7.1-proxyhealth` | Fork com logs/status de proxy health (usar quando o deploy incluir o Evolution GO). |
+---
 
-## Regras de Operação para Agentes e CI/CD
+## Mapa de Imagens
 
-1. **Arquivos Swarm**: Quando qualquer serviço em `deploy/local/*.yaml` for alterado, o agente / humano deve obrigatoriamente consultar esta tabela antes de imputar ou alterar os nomes em `image:`.
-2. **Novos Builds**: Se o **CRM** sofrer edições locais de código (adicionada nova feature, controller, etc), ele passa a requerer um `docker build` próprio. Somente nesse caso transfira a responsabilidade da tabela acima para `lc1868/evo-ai-crm-community:1.0.0`.
-3. **Imagens Base**: Imagens externas como Redis, Postgres, etc, continuam usando o upstream oficial das suas mantenedoras (`redis:7-alpine`, `postgres:15-alpine`).
+| Serviço | Registry | Imagem | Tag rc4 | Motivo |
+|:---|:---|:---|:---|:---|
+| **Auth** | `lc1868` | `lc1868/evo-auth-service-community` | `v1.0.0-rc4` | Seeds white-label + dev_admin |
+| **CRM** | `lc1868` | `lc1868/evo-ai-crm-community` | `v1.0.0-rc4` | Proxy health controller + routes.rb customizado |
+| **Frontend** | `lc1868` | `lc1868/evo-ai-frontend-community` | `v1.0.0-rc4` | White-label branding + ProxyPanel + CSP nginx |
+| **Processor** (Python) | `lc1868` | `lc1868/evo-ai-processor-community` | `v1.0.0-rc4` | Sem customização atual — rebuild por precaução |
+| **Core** (Go) | `lc1868` | `lc1868/evo-ai-core-service-community` | `v1.0.0-rc4` | Sem customização atual — rebuild por precaução |
+| **Bot Runtime** | `lc1868` | `lc1868/evo-bot-runtime` | `v1.0.0-rc4` | Sem customização atual — rebuild por precaução |
+| **Evolution GO** | `lc1868` | `lc1868/evolution-go` | `v0.7.1` | Proxy health monitor + API endpoint |
+| **Gateway** (nginx) | `lc1868` | `lc1868/evo-crm-gateway` | `1.0.0` | Config customizada |
+| **evo-flow** | build local | — | — | Build via `docker-compose.evo-flow.yml` — **nunca publicar no Docker Hub** |
+| Redis | upstream | `redis:7-alpine` | — | Sem customização |
+| PostgreSQL | upstream | `postgres:15-alpine` | — | Sem customização |
+| ClickHouse | upstream | `clickhouse/clickhouse-server:latest` | — | Sem customização |
+| Kafka | upstream | `confluentinc/cp-kafka:7.4.0` | — | Sem customização |
+| Temporal | upstream | `temporalio/auto-setup:latest` | — | Sem customização |
 
-## Como Fazer Manutenção deste Arquivo
+---
 
-Se você customizar um serviço que antes não era customizado (como o CRM), atualize a coluna _Registry Alvo_ para o seu prefixo pessoal e registre o motivo da alteração de escopo. Todos os agentes consumirão este arquivo de agora em diante antes de mexer na infra.
+## Script de build e push
+
+```bash
+# Dry-run — ver o que seria executado
+./scripts/docker-publish.sh --dry-run --version 1.0.0-rc4
+
+# Todos os serviços
+./scripts/docker-publish.sh --version 1.0.0-rc4
+
+# Serviço específico
+./scripts/docker-publish.sh --image evo-ai-crm-community --version 1.0.0-rc4
+
+# evo-flow (build local, não publica)
+docker compose -f docker-compose.evo-flow.yml build evo-flow
+```
+
+Log gerado automaticamente em: `logs/docker-publish-<timestamp>.log`
+
+---
+
+## Regras de operação
+
+1. **Qualquer serviço com customização local → obrigatório usar `lc1868/*`**. Nunca apontar para `evoapicloud` ou `evolution-foundation` se houver código local modificado.
+
+2. **Antes de buildar**: rodar `evo-commit-submodules` para garantir que todos os commits locais estão no fork. Build de código não commitado é build de código que pode se perder.
+
+3. **Convenção de tags**:
+   - Sync puro sem extra: `v1.0.0-rc4`
+   - Sync + customização adicional: `v1.0.0-rc4-custom`
+   - Feature nova sem sync: `v1.0.0-rc4-<slug>`
+   - Hotfix: `v1.0.0-rc4-hotfix-<data>`
+
+4. **evo-flow nunca vai para Docker Hub** — depende de configs locais (Kafka, ClickHouse, Temporal) e é sempre buildado on-demand via compose.
+
+5. **Após push**: atualizar tags em `docs/local/stack-swarm-vps.yaml` e rodar `docker service update` no Swarm.
+
+6. **Atualizar este arquivo** sempre que:
+   - Um serviço sem customização receber customização local → mover para `lc1868`
+   - Uma customização for absorvida pelo upstream → pode voltar para upstream se não houver mais diff local
+   - Uma nova tag for publicada
+
+---
+
+## Quando um serviço volta para upstream
+
+Se um serviço `lc1868/*` não tem mais nenhuma customização local (absorvida pelo upstream):
+
+1. Verificar: `git diff HEAD..<new-tag> --name-only` no submodule — deve ser vazio ou só docs
+2. Atualizar a linha deste arquivo para o registry upstream
+3. Atualizar `docker-compose.yml` e `stack-swarm-vps.yaml`
+4. Registrar em `docs/CHANGES-LOCAL.md`
+
+> Ver skill: `.agent/skills/evo-upstream-sync/SKILL.md`
