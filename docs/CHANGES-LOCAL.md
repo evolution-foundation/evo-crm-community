@@ -282,8 +282,58 @@ Formato de entrada:
 
 ---
 
+## [2026-05-25] Sync upstream v1.0.0-rc4
+
+### Todos os submodules core atualizados para v1.0.0-rc4
+
+**evo-ai-crm-community** `v1.0.0-rc2 → v1.0.0-rc4`
+- Reset para rc4 (sem customizações exclusivas — sync_whatsapp_subscription já absorvido upstream)
+- `[NOVO]` `app/controllers/api/v1/evolution_go/proxy_controller.rb`: endpoint GET/POST/DELETE para proxy health e configuração da instância evolution_go. Rota adicionada em `config/routes.rb` dentro do bloco `evolution_go`.
+
+**evo-ai-frontend-community** `v1.0.0-rc2 → v1.0.0-rc4`
+- Cherry-pick do commit `feat(white-label)` sobre o rc4 (sem conflito direto)
+- `nginx.conf` `[RESOLVE]`: removido `cloudflareinsights.com` e `http://localhost:*` do CSP (decisão: seguir rc4 — não usamos Cloudflare Analytics)
+- `docker-entrypoint.sh`: linha de execução do `branding-entrypoint.sh` preservada após cherry-pick
+- `[NOVO]` `src/components/channels/forms/whatsapp/ProxyPanel.tsx`: UI para visualização e configuração de proxy evolution_go
+
+**evo-auth-service-community** `v1.0.0-rc2 → v1.0.0-rc4`
+- Rebase limpo — commit white-label (`feat(white-label): configurable identity seed`) reaplicado sobre rc4 sem conflito
+- ⚠️ Migração `20260518140000_invalidate_plaintext_backup_codes`: usuários com MFA ativo antes do rc4 precisarão re-configurar TOTP. Rodar `db:migrate` no próximo deploy.
+
+**evo-ai-core-service-community** `v1.0.0-rc3 → v1.0.0-rc4`
+- Reset direto para rc4 (sem customizações locais — commit extra era do upstream EvolutionAPI já contido no rc4)
+
+**evo-ai-processor-community** `v1.0.0-rc3 → v1.0.0-rc4`
+- Reset direto para rc4 (todos os fixes locais — stage_name, link_product, knowledge_nexus — já absorvidos upstream)
+
+**evo-bot-runtime**: mantido em `v1.0.0-rc3` (upstream não emitiu rc4 para este serviço)
+
+### Conflitos resolvidos
+| Arquivo | Resolução |
+|---|---|
+| `evo-ai-frontend-community/nginx.conf` | keep-upstream (sem cloudflare, sem localhost) |
+| `evo-ai-frontend-community/docker-entrypoint.sh` | keep-local (linha branding-entrypoint preservada via cherry-pick) |
+
 ## Pendências
 
+- [ ] Rodar `db:migrate` nos containers auth + crm no próximo deploy (novas migrations rc4)
+- [ ] Testar MFA re-setup após migration `invalidate_plaintext_backup_codes`
 - [ ] Merge de `fix/crlf-gitattributes` em `develop` do fork `evo-ai-crm-community`
 - [ ] Abrir PRs dos forks para o upstream quando as correções forem genéricas (CRLF fix é candidato)
 - [ ] Revisar `docs/local/stack-swarm-vps.yaml` e commitar versão atualizada no orquestrador
+
+---
+
+## [2026-05-24] Documentação e Stack do evo-flow (Orquestrador de Jornadas)
+
+### Orquestrador (`Luizcc87/evo-crm-community`)
+
+- **Arquivo**: `docker-compose.evo-flow.yml` `[NOVO]`
+  - Motivo: Isolar os serviços de campanha (`evo-flow`, `temporal`, `clickhouse`, `kafka`, `zookeeper`) do compose principal, permitindo rodá-los apenas quando necessário no ambiente local.
+  - Conflito no sync: não — arquivo novo e local.
+  - Branch: `develop`
+
+- **Arquivo**: `docs/local/EVO_FLOW_SETUP.md` `[NOVO]`
+  - Motivo: Documentação de como inicializar os serviços do `evo-flow` localmente e instruções para deploy via Swarm/Portainer.
+  - Conflito no sync: não — diretório `docs/local/` é exclusivo do fork local.
+  - Branch: `develop`
