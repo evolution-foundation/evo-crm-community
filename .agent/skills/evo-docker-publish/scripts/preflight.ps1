@@ -13,7 +13,7 @@ param(
 )
 
 $ErrorActionPreference = "SilentlyContinue"
-$ROOT = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$ROOT = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 
 $pass = $true
 
