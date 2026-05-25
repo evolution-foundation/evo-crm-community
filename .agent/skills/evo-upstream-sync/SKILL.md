@@ -223,11 +223,63 @@ Also update `docs/upstream-sync-analysis.md` — change the "Upstream tag" and "
 
 ---
 
+## Step 6 — Post-Sync Commit Convention
+
+All custom commits added after a sync **must** use the `custom:` prefix so they are
+identifiable in the next sync cycle:
+
+```
+custom: <short description>
+
+Examples:
+  custom: proxy health/config endpoint for evolution_go instances
+  custom: white-label runtime branding injection
+```
+
+This enables filtering in the next sync:
+```bash
+git log --oneline --grep="^custom:" <new-tag>..HEAD
+```
+
+Also update `references/risk-registry.md` whenever a new file is customized or a
+customization is removed (absorbed by upstream).
+
+---
+
+## Agent Integration
+
+This skill is invoked by other agents in the _evo cycle. Do not modify those agents —
+this section documents the integration contract.
+
+| Agent | When to invoke evo-upstream-sync |
+|---|---|
+| **evo-master** | Menu option "Sync Upstream" or when user reports new release |
+| **evo-sm** | Sprint planning: run `check-releases.ps1` before closing backlog |
+| **evo-dev** | Before implementing in a submodule: verify pinned is current |
+| **evo-dev-story** | If story touches a high-risk file (see risk-registry): warn user |
+| **evo-retrospective** | Include upstream sync questions in retro template |
+| **evo-document-project** | After sync: re-scan submodules, update upstream-sync-analysis.md |
+
+**Full integration guide**: `references/agent-integration.md`
+
+### Gate rule for evo-dev
+
+Before any commit to `evo-ai-crm-community`, `evo-ai-frontend-community`, or
+`evo-auth-service-community`, check:
+
+```powershell
+.\.agent\skills\evo-upstream-sync\scripts\check-releases.ps1 -SkipFetch
+```
+
+If any submodule shows `🆕 YES` → **pause implementation** → run sync → resume story.
+
+---
+
 ## Additional Resources
 
 - **`references/risk-registry.md`** — per-file risk classification for all submodules
+- **`references/agent-integration.md`** — when each evo-* agent should invoke this skill
 - **`references/test-checklist.md`** — full smoke + regression test checklist
-- **`scripts/check-releases.ps1`** — fetches all upstream tags and prints diff summary
+- **`scripts/check-releases.ps1`** — fetches all upstream tags, auto-adds missing remotes
 - **`docs/upstream-sync-analysis.md`** — fork topology and current status
-- **`docs/CHANGES-LOCAL.md`** — log of all local customizations
-- **`scripts/check-upstream-status.ps1`** — existing upstream status script
+- **`docs/CHANGES-LOCAL.md`** — log of all local customizations and conflict resolutions
