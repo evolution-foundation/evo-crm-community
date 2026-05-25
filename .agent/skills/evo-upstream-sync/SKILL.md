@@ -44,28 +44,41 @@ Output should show which submodules have tags newer than the pinned version. Sub
 
 ## Step 2 — Analyze Diff: Upstream Tag vs Local HEAD
 
-For each submodule with a new upstream tag, identify which local-custom files conflict:
+For each submodule with a new upstream tag, run this analysis:
 
 ```bash
-# List files changed between upstream tag and local HEAD
-git -C <submodule> diff <upstream-new-tag>..HEAD --name-only
+# Commits in upstream new tag NOT yet in local HEAD (what we're absorbing)
+git -C <submodule> log --oneline HEAD..<new-tag>
 
-# Count commits ahead/behind
-git -C <submodule> rev-list --left-right --count <upstream-new-tag>...HEAD
+# Local commits above pinned tag (what we must preserve)
+git -C <submodule> log --oneline <pinned-tag>..HEAD
 
-# Show local commits with custom: prefix (customizations)
-git -C <submodule> log --oneline --grep="^custom:" <upstream-new-tag>..HEAD
+# Files changed by upstream new commits (potential conflicts)
+git -C <submodule> diff HEAD..<new-tag> --name-only
 
-# Show diff for high-risk files specifically
-git -C <submodule> diff <upstream-new-tag>..HEAD -- docker-compose.yml docker-entrypoint.sh nginx.conf
+# Files changed locally since pinned tag
+git -C <submodule> diff <pinned-tag>..HEAD --name-only
+
+# Intersection = real conflict candidates (run in PowerShell):
+# $upstreamFiles = git -C <submodule> diff "HEAD..<new-tag>" --name-only
+# $localFiles    = git -C <submodule> diff "<pinned>..<new-tag>" --name-only
+# $localFiles | Where-Object { $upstreamFiles -contains $_ }
 ```
+
+> **Note**: Do NOT rely on `--grep="^custom:"` to find local customizations — most commits
+> do not use that prefix. Inspect `log <pinned>..HEAD` directly and read each commit.
 
 **High-risk files to check always** (from `references/risk-registry.md`):
 - `docker-compose.yml` (root) — highest conflict probability
-- `docker-entrypoint.sh` (frontend) — runtime env var substitution logic
+- `docker-entrypoint.sh` (frontend) — runtime env var substitution + branding call
 - `nginx.conf` (frontend) — CSP headers
 - `.env.example` (root) — new required variables
-- Any migration file in `evo-auth-service-community/db/migrate/`
+- `db/migrate/*` in `evo-auth-service-community` and `evo-ai-crm-community`
+
+**For each high-risk file, check the actual diff:**
+```bash
+git -C <submodule> diff HEAD..<new-tag> -- <file>
+```
 
 Produce a conflict risk table:
 
@@ -74,30 +87,45 @@ Produce a conflict risk table:
 
 ---
 
-## Step 3 — Generate Merge Plan
+## Step 3 — Determine Strategy per Submodule
 
-Based on the conflict analysis, create a merge plan document at `docs/sync/SYNC-PLAN-<date>.md`.
+Before generating the merge plan, classify each submodule:
 
-The plan must include:
-
-1. **Tag being absorbed** — e.g. `v1.0.0-rc3` for each submodule
-2. **Strategy per submodule**:
-   - `SKIP` — no new upstream tag, no action
-   - `FAST-FORWARD` — no local commits, just update pointer
-   - `REBASE` — local commits exist, rebase on new tag (preferred for small sets)
-   - `CHERRY-PICK` — cherry-pick custom: commits onto new upstream tag
-   - `MANUAL-MERGE` — high conflict, requires careful line-by-line review
-3. **Pre-sync safety tags** — create `custom/pre-sync-<date>` on each modified submodule before touching anything
-4. **Test checklist** (copy from `references/test-checklist.md`)
-
-Template command for pre-sync tags:
-
-```bash
-DATE=$(date +%Y%m%d)
-git -C evo-ai-crm-community tag custom/pre-sync-$DATE
-git -C evo-ai-frontend-community tag custom/pre-sync-$DATE
-git -C evo-auth-service-community tag custom/pre-sync-$DATE
 ```
+A. LocalAhead=0, no known customizations, diverged history → RESET
+B. LocalAhead=0, clean history (FF possible)              → FAST-FORWARD
+C. LocalAhead>0, commits rebase cleanly                   → REBASE
+D. LocalAhead>0, cherry-pick specific commits             → CHERRY-PICK
+E. Both sides changed same files                          → MANUAL-MERGE
+F. No new upstream tag                                    → SKIP
+```
+
+> **RESET** (strategy A) is common when the fork origin changed (EvolutionAPI → evolution-foundation).
+> FF will fail with "refusing to merge unrelated histories" or "diverging branches". Use:
+> ```bash
+> git -C <submodule> branch -f main <new-tag>
+> git -C <submodule> checkout main
+> ```
+> Only safe when `git diff HEAD..<new-tag> --name-only` shows no files unique to local HEAD.
+
+Generate the merge plan document at `docs/sync/SYNC-PLAN-<date>.md`. Include:
+
+1. **Tag being absorbed** per submodule
+2. **Strategy** (RESET / FAST-FORWARD / REBASE / CHERRY-PICK / MANUAL-MERGE / SKIP)
+3. **Pre-sync safety tags** — create `custom/pre-sync-<date>` before touching anything:
+
+```powershell
+$DATE = "20260525"
+git -C evo-ai-crm-community tag "custom/pre-sync-$DATE"
+git -C evo-ai-frontend-community tag "custom/pre-sync-$DATE"
+git -C evo-auth-service-community tag "custom/pre-sync-$DATE"
+git -C evo-ai-core-service-community tag "custom/pre-sync-$DATE"
+git -C evo-ai-processor-community tag "custom/pre-sync-$DATE"
+```
+
+4. **Conflict resolutions** for each high-risk file
+5. **db:migrate reminder** if new migrations exist
+6. **Test checklist** (copy from `references/test-checklist.md`)
 
 ---
 
@@ -105,19 +133,35 @@ git -C evo-auth-service-community tag custom/pre-sync-$DATE
 
 ### 4a. Apply merge strategy per submodule
 
-**For FAST-FORWARD submodules:**
+**RESET** (no local customizations, diverged history):
 ```bash
+git -C <submodule> branch -f main <new-tag>
 git -C <submodule> checkout main
-git -C <submodule> merge upstream/<new-tag> --ff-only
+# Verify: git log --oneline -3
 ```
 
-**For REBASE/CHERRY-PICK submodules:**
+**FAST-FORWARD** (clean history, no local commits):
 ```bash
-# Create sync branch
+git -C <submodule> checkout main
+git -C <submodule> merge <new-tag> --ff-only
+```
+
+**REBASE** (local commits, clean rebase expected):
+```bash
 git -C <submodule> checkout -b sync/<new-tag>
 git -C <submodule> rebase <new-tag>
-# Resolve conflicts, then:
+# Resolve conflicts if any, then:
 git -C <submodule> rebase --continue
+# Promote to main:
+git -C <submodule> branch -f main sync/<new-tag>
+git -C <submodule> checkout main
+```
+
+**CHERRY-PICK** (pick specific commits onto new tag):
+```bash
+git -C <submodule> checkout -b sync/<new-tag> <new-tag>
+git -C <submodule> cherry-pick <commit-sha>
+# Resolve conflicts, commit, repeat for each commit
 ```
 
 **For the root orchestrator (docker-compose.yml, .env.example):**
