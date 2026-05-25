@@ -7,26 +7,32 @@ trabalhando neste fork do Evo CRM Community.
 
 ## Contexto do repositório
 
-Este é um **fork orquestrador** de `EvolutionAPI/evo-crm-community`.
+Este é um **fork orquestrador** de `evolution-foundation/evo-crm-community`.
 Contém 6 submodules de serviço + 3 companion submodules, cada um com seu próprio fork em `Luizcc87/*`.
 
 - `origin` → `https://github.com/Luizcc87/evo-crm-community.git` (seu fork — escrita)
-- `upstream` → `https://github.com/EvolutionAPI/evo-crm-community.git` (origem — só leitura)
+- `upstream` → `https://github.com/evolution-foundation/evo-crm-community.git` (origem — só leitura)
 
 Submodules de serviço têm forks próprios em `Luizcc87/<nome>` com remote `fork` para escrita.
-Ver `docs/SYNC.md` para procedimento completo de sync com upstream.
+Ver `.agent/skills/evo-upstream-sync/SKILL.md` para procedimento completo de sync com upstream.
 
 ---
 
 ## Antes de qualquer edição
 
 1. Rode `git status` no orquestrador e no submodule afetado.
-2. Identifique a qual das três categorias a mudança pertence:
+2. **Se o submodule afetado for `evo-ai-crm-community`, `evo-ai-frontend-community` ou `evo-auth-service-community`**, verifique se há nova release upstream antes de editar:
+   ```powershell
+   .\.agent\skills\evo-upstream-sync\scripts\check-releases.ps1 -SkipFetch
+   ```
+   Se qualquer submodule mostrar `🆕 YES` → **pausar** → rodar sync → retomar edição.
+3. Identifique a qual das três categorias a mudança pertence:
    - **Orquestrador** — arquivos na raiz ou em `docs/`, `scripts/`, `deploy/`, `nginx/`
    - **Submodule** — arquivos dentro de `evo-*/`, `evolution-*/`, `evo-nexus/`
    - **Local/deploy** — arquivos em `docs/local/` e `deploy/local/` (nunca sobem para upstream)
-3. Nunca edite `main` de um submodule diretamente — use branch `develop` ou `custom/`.
-4. Não misture commits de scopes diferentes no mesmo commit.
+4. Nunca edite `main` de um submodule diretamente — use branch `develop` ou `custom/`.
+5. Não misture commits de scopes diferentes no mesmo commit.
+6. Se o arquivo que vai editar está no `risk-registry.md` → registrar a mudança em `docs/CHANGES-LOCAL.md` na mesma sessão.
 
 ---
 
@@ -109,7 +115,12 @@ Ver `docs/SYNC.md` para procedimento completo de sync com upstream.
 |---|---|
 | `CLAUDE.md` | Comandos, arquitetura, variáveis críticas — leitura obrigatória para contexto inicial |
 | `CONTEXT.md` | Remotes, convenção de arquivos, topologia de deploy |
-| `docs/SYNC.md` | Procedimento de sync com upstream |
+| `.agent/skills/evo-upstream-sync/SKILL.md` | Procedimento completo de sync com upstream (releases, análise, merge, validação) |
+| `.agent/skills/evo-upstream-sync/scripts/check-releases.ps1` | Verifica se há nova release em todos os submodules |
+| `.agent/skills/evo-upstream-sync/references/risk-registry.md` | Arquivos customizados por submodule — risco de conflito por arquivo |
+| `.agent/skills/evo-upstream-sync/references/agent-integration.md` | Quando cada agente evo-* deve invocar o sync |
+| `.agent/skills/evo-commit-submodules/SKILL.md` | Mapeia mudanças por repositório e commita/pusha para cada fork |
+| `.agent/skills/evo-commit-submodules/scripts/scan-changes.ps1` | Lista arquivos modificados/untracked em todos os submodules |
 | `docs/CHANGES-LOCAL.md` | Registro de todas as customizações locais em submodules |
 | `docs/local/stack-swarm-vps.yaml` | Stack de produção atual (Portainer Swarm) |
 | `docs/local/IMAGE_REGISTRY_MAP.md` | Mapeamento de imagens originais → `lc1868/*` |

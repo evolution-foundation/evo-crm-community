@@ -1,17 +1,18 @@
 # CONTEXT.md
 
-Este repositório é um fork de `EvolutionAPI/evo-crm-community`.
+Este repositório é um fork de `evolution-foundation/evo-crm-community`.
 
 ## Remotes
 
 - `origin`: `https://github.com/Luizcc87/evo-crm-community.git`
-- `upstream`: `https://github.com/EvolutionAPI/evo-crm-community.git`
+- `upstream`: `https://github.com/evolution-foundation/evo-crm-community.git`
 
 ## Submodules
 
-Cada submodule de serviço tem fork próprio em `Luizcc87/<nome>` com dois remotes:
-- `origin` → `EvolutionAPI/<nome>` (upstream, só leitura)
-- `fork` → `Luizcc87/<nome>` (seu fork, escrita)
+Cada submodule de serviço tem fork próprio em `Luizcc87/<nome>` com três remotes:
+- `origin` → `evolution-foundation/<nome>` (upstream source — **só leitura**)
+- `upstream` → mesmo que origin (alias usado pelo evo-upstream-sync)
+- `fork` → `Luizcc87/<nome>` (**destino de todo push local**)
 
 Customizações ficam em branch `develop` ou `custom/` nos forks — nunca em `main`.
 
@@ -36,4 +37,5 @@ Customizações ficam em branch `develop` ou `custom/` nos forks — nunca em `m
 - Prefixo `custom:` em commits de customização de submodules.
 - Atualizar `docs/CHANGES-LOCAL.md` após modificar arquivos de submodules.
 - Ver `AGENTS.md` para regras completas de operação com agentes de IA.
-- Ver `docs/SYNC.md` para procedimento de sync com upstream.
+- Ver `.agent/skills/evo-upstream-sync/SKILL.md` para procedimento de sync com upstream.
+- Ver `.agent/skills/evo-commit-submodules/SKILL.md` para commitar e fazer push por repositório.

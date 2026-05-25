@@ -1,0 +1,60 @@
+# Cursor Rules — Evo CRM Community Fork
+
+## O que é este repo
+
+Fork orquestrador de `evolution-foundation/evo-crm-community`.
+9 submodules: 6 serviços core + 3 companion. Cada submodule tem fork próprio em `Luizcc87/*`.
+
+## Remotes por submodule
+
+- `origin` / `upstream` → `evolution-foundation/<repo>` — **somente leitura**
+- `fork` → `Luizcc87/<repo>` — **push aqui sempre**
+
+O orquestrador (`evo-crm-community`) faz push para `origin` (que é `Luizcc87/evo-crm-community`).
+
+## Regra de gate — antes de editar submodule core
+
+Se for editar `evo-ai-crm-community`, `evo-ai-frontend-community` ou `evo-auth-service-community`:
+
+```powershell
+.\.agent\skills\evo-upstream-sync\scripts\check-releases.ps1 -SkipFetch
+```
+
+Se qualquer linha mostrar `🆕 YES` → **não implementar** → rodar sync upstream primeiro.
+
+## Commits em submodule
+
+Sempre usar prefixo `custom:` para customizações locais:
+
+```
+custom: add proxy health endpoint for evolution_go
+custom: white-label runtime branding injection
+```
+
+Nunca commitar `.env` (apenas `.env.example`).
+
+## Arquivos de alto risco (verificar risk-registry antes de editar)
+
+- `docker-entrypoint.sh` (frontend)
+- `nginx.conf` (frontend)
+- `config/routes.rb` (crm)
+- `db/seeds.rb` (auth)
+- `docker-compose.yml` (root)
+
+Risk registry completo: `.agent/skills/evo-upstream-sync/references/risk-registry.md`
+
+## Após editar arquivo de submodule
+
+Registrar em `docs/CHANGES-LOCAL.md` — obrigatório.
+
+## Skills disponíveis
+
+- Sync upstream: `.agent/skills/evo-upstream-sync/SKILL.md`
+- Commit/push por fork: `.agent/skills/evo-commit-submodules/SKILL.md`
+- Scan de mudanças: `.agent/skills/evo-commit-submodules/scripts/scan-changes.ps1`
+
+## Documentação operacional
+
+- `CLAUDE.md` — comandos, arquitetura, portas
+- `AGENTS.md` — regras completas para agentes de IA
+- `CONTEXT.md` — topologia de remotes e convenções

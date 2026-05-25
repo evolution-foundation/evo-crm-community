@@ -31,6 +31,9 @@ evo-retrospective
 
 evo-document-project
   └── Após sync: re-escanear submodules e atualizar docs/upstream-sync-analysis.md
+
+evo-commit-submodules
+  └── Após sync aplicado e conflitos resolvidos → commitar + push de cada submodule afetado
 ```
 
 ---
