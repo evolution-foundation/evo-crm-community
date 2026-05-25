@@ -1,20 +1,23 @@
 version: "3.8"
 
 # =============================================================================
-# Evo CRM Community — Versão POPULADA E COMPLETA (Hardcoded)
+# Evo CRM Community — Stack Swarm VPS (Oracle Cloud aarch64)
+# Última atualização: 2026-05-25 — bump para v1.0.0-rc4
 # =============================================================================
 
 services:
-  # Gateway - Nginx
+
+  # ---------------------------------------------------------------------------
+  # Gateway — Nginx reverse proxy
+  # ---------------------------------------------------------------------------
   evo_gateway:
-    image: lc1868/evo-crm-gateway:latest
+    image: lc1868/evo-crm-gateway:1.0.0-rc4
     environment:
       AUTH_UPSTREAM: "evo_auth:3001"
       CRM_UPSTREAM: "evo_crm:3000"
       CORE_UPSTREAM: "evo_core:5555"
       PROCESSOR_UPSTREAM: "evo_processor:8000"
       BOT_RUNTIME_UPSTREAM: "evo_bot_runtime:8080"
-    
     networks:
       - network_swarm_public
     deploy:
@@ -28,11 +31,11 @@ services:
         - traefik.http.services.evo_gateway.loadbalancer.server.port=3030
         - traefik.http.services.evo_gateway.loadbalancer.passHostHeader=true
 
+  # ---------------------------------------------------------------------------
   # Auth Service
+  # ---------------------------------------------------------------------------
   evo_auth:
-    image: lc1868/evo-auth-service-community:1.0.0-rc3
-    # command: bash -c "bundle exec rails db:migrate || echo 'Migration errors'; bundle exec rails s -p 3001 -b 0.0.0.0"
-    # command: sh -c "bundle exec rails db:migrate || echo 'Migration had errors'; bundle exec rails s -p 3000 -b 0.0.0.0"
+    image: lc1868/evo-auth-service-community:1.0.0-rc4
     command: sh -c "bundle exec rails db:migrate 2>&1 || echo 'Migration had errors, continuing...'; bundle exec rails s -p 3001 -b 0.0.0.0"
     environment:
       RAILS_ENV: production
@@ -45,7 +48,7 @@ services:
       POSTGRES_USERNAME: "evo_user"
       POSTGRES_PASSWORD: "EvoPass2026aB0A"
       POSTGRES_DATABASE: "evo_community"
-      POSTGRES_SSLMODE: "disable" # Ajustado para local
+      POSTGRES_SSLMODE: "disable"
       REDIS_URL: "redis://evo-crm-redis_cache:6379/1"
       FRONTEND_URL: "https://evocrm.l2csolucoes.com.br"
       BACKEND_URL: "https://apievocrm.l2csolucoes.com.br"
@@ -64,19 +67,13 @@ services:
       MFA_ISSUER: "EvoCRM"
       SIDEKIQ_CONCURRENCY: 10
       ACTIVE_STORAGE_SERVICE: "local"
-      AUTH_UPSTREAM: "evo_auth:3001"
-      CRM_UPSTREAM: "evo_crm:3000"
-      CORE_UPSTREAM: "evo_core:5555"
-      PROCESSOR_UPSTREAM: "evo_processor:8000"
-      BOT_RUNTIME_UPSTREAM: "evo_bot_runtime:8080"
-      
     networks:
       - network_swarm_public
     deploy:
       replicas: 1
 
   evo_auth_sidekiq:
-    image: lc1868/evo-auth-service-community:1.0.0-rc3
+    image: lc1868/evo-auth-service-community:1.0.0-rc4
     command: sh -c "bundle exec sidekiq"
     healthcheck:
       disable: true
@@ -115,12 +112,12 @@ services:
     deploy:
       replicas: 1
 
+  # ---------------------------------------------------------------------------
   # CRM Service
+  # ---------------------------------------------------------------------------
   evo_crm:
-    image: lc1868/evo-ai-crm-community:latest
-    # command: sh -c "bundle exec rails db:migrate || echo 'Migration had errors'; bundle exec rails s -p 3000 -b 0.0.0.0"
+    image: lc1868/evo-ai-crm-community:1.0.0-rc4
     command: sh -c "bundle exec rails db:migrate || true && bundle exec rails s -p 3000 -b 0.0.0.0"
-
     environment:
       RAILS_ENV: production
       RAILS_SERVE_STATIC_FILES: "true"
@@ -154,7 +151,7 @@ services:
       replicas: 1
 
   evo_crm_sidekiq:
-    image: lc1868/evo-ai-crm-community:latest
+    image: lc1868/evo-ai-crm-community:1.0.0-rc4
     command: sh -c "bundle exec sidekiq"
     healthcheck:
       disable: true
@@ -190,9 +187,11 @@ services:
     deploy:
       replicas: 1
 
-  # Core Service
+  # ---------------------------------------------------------------------------
+  # Core Service (Go)
+  # ---------------------------------------------------------------------------
   evo_core:
-    image: lc1868/evo-ai-core-service-community:latest
+    image: lc1868/evo-ai-core-service-community:1.0.0-rc4
     environment:
       DB_HOST: "evo-crm-db_postgres"
       DB_PORT: "5432"
@@ -218,9 +217,11 @@ services:
     deploy:
       replicas: 1
 
-  # Processor Service
+  # ---------------------------------------------------------------------------
+  # Processor Service (Python / FastAPI)
+  # ---------------------------------------------------------------------------
   evo_processor:
-    image: lc1868/evo-ai-processor-community:latest
+    image: lc1868/evo-ai-processor-community:1.0.0-rc4
     command: sh -c "alembic stamp head || echo 'Already stamped'; alembic upgrade head || echo 'Migration skipped'; python -m scripts.run_seeders || echo 'Seeders skipped'; uvicorn src.main:app --host 0.0.0.0 --port 8000"
     environment:
       POSTGRES_CONNECTION_STRING: "postgresql://evo_user:EvoPass2026aB0A@evo-crm-db_postgres:5432/evo_community"
@@ -251,190 +252,11 @@ services:
     deploy:
       replicas: 1
 
-  # Bot Runtime
+  # ---------------------------------------------------------------------------
+  # Bot Runtime (Go)
+  # ---------------------------------------------------------------------------
   evo_bot_runtime:
-    image: lc1868/evo-bot-runtime:latest
-    environment:
-      LISTEN_ADDR: "0.0.0.0:8080"
-      REDIS_URL: "redis://evo-crm-redis_cache:6379/1"
-      AI_PROCESSOR_URL: "http://evo_processor:8000"
-    command: sh -c "bundle exec sidekiq"
-    healthcheck:
-      disable: true
-    environment:
-      RAILS_ENV: production
-      RAILS_MAX_THREADS: 5
-      SECRET_KEY_BASE: "5f6c823a9d1b4e2f8c5a3d7e9b0c2a4f6d8e0f1a3b5c7d9e1f2a4b6c8d0e2f4a5b"
-      JWT_SECRET_KEY: "9a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f"
-      EVOAI_CRM_API_TOKEN: "evo_token_3a1b4c5d6e7f8g9h0i1j2k3l"
-      POSTGRES_HOST: "evo-crm-db_postgres"
-      POSTGRES_PORT: 5432
-      POSTGRES_USERNAME: "evo_user"
-      POSTGRES_PASSWORD: "EvoPass2026aB0A"
-      POSTGRES_DATABASE: "evo_community"
-      POSTGRES_SSLMODE: "disable"
-      REDIS_URL: "redis://evo-crm-redis_cache:6379/1"
-      FRONTEND_URL: "https://evocrm.l2csolucoes.com.br"
-      BACKEND_URL: "https://apievocrm.l2csolucoes.com.br"
-      CORS_ORIGINS: "https://evocrm.l2csolucoes.com.br,https://apievocrm.l2csolucoes.com.br"
-      MAILER_SENDER_EMAIL: "server@l2csolucoes.com.br"
-      SMTP_ADDRESS: "smtp.email.sa-saopaulo-1.oci.oraclecloud.com"
-      SMTP_PORT: 587
-      SMTP_DOMAIN: "smtp.email.sa-saopaulo-1.oci.oraclecloud.com"
-      SMTP_AUTHENTICATION: "plain"
-      SMTP_ENABLE_STARTTLS_AUTO: "true"
-      SMTP_USERNAME: "ocid1.user.oc1..aaaaaaaadlkmfvz7bzwcmdmkowhuwhvkyk2uuma6nbv5enzo3rqb4ksmmm5a@ocid1.tenancy.oc1..aaaaaaaatqoxpxgimqfxxgfm2isddf2lkhw2ixxmhk2j76wmzektngkvcv4q.yj.com"
-      SMTP_PASSWORD: "Z79kS]D1sQj]QhczPmxe"
-      DOORKEEPER_JWT_SECRET_KEY: "f1e2d3c4b5a697887766554433221100aabbccddeeffeeddccbbaa0099887766"
-      DOORKEEPER_JWT_ALGORITHM: "hs256"
-      DOORKEEPER_JWT_ISS: "evo-auth-service"
-      MFA_ISSUER: "EvoCRM"
-      SIDEKIQ_CONCURRENCY: 10
-      ACTIVE_STORAGE_SERVICE: "local"
-    networks:
-      - network_swarm_public
-    deploy:
-      replicas: 1
-
-  # CRM Service
-  evo_crm:
-    image: lc1868/evo-ai-crm-community:latest
-    # command: sh -c "bundle exec rails db:migrate || echo 'Migration had errors'; bundle exec rails s -p 3000 -b 0.0.0.0"
-    command: sh -c "bundle exec rails db:migrate || true && bundle exec rails s -p 3000 -b 0.0.0.0"
-
-    environment:
-      RAILS_ENV: production
-      RAILS_SERVE_STATIC_FILES: "true"
-      RAILS_LOG_TO_STDOUT: "true"
-      SECRET_KEY_BASE: "5f6c823a9d1b4e2f8c5a3d7e9b0c2a4f6d8e0f1a3b5c7d9e1f2a4b6c8d0e2f4a5b"
-      JWT_SECRET_KEY: "9a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f"
-      EVOAI_CRM_API_TOKEN: "evo_token_3a1b4c5d6e7f8g9h0i1j2k3l"
-      POSTGRES_HOST: "evo-crm-db_postgres"
-      POSTGRES_PORT: 5432
-      POSTGRES_USERNAME: "evo_user"
-      POSTGRES_PASSWORD: "EvoPass2026aB0A"
-      POSTGRES_DATABASE: "evo_community"
-      POSTGRES_SSLMODE: "disable"
-      REDIS_URL: "redis://evo-crm-redis_cache:6379/1"
-      EVO_AUTH_SERVICE_URL: "http://evo_auth:3001"
-      EVO_AI_CORE_SERVICE_URL: "http://evo_core:5555"
-      BACKEND_URL: "https://apievocrm.l2csolucoes.com.br"
-      FRONTEND_URL: "https://evocrm.l2csolucoes.com.br"
-      CORS_ORIGINS: "https://evocrm.l2csolucoes.com.br,https://apievocrm.l2csolucoes.com.br"
-      DISABLE_TELEMETRY: "true"
-      LOG_LEVEL: info
-      ENABLE_ACCOUNT_SIGNUP: "true"
-      ENABLE_PUSH_RELAY_SERVER: "true"
-      ENABLE_INBOX_EVENTS: "true"
-      BOT_RUNTIME_URL: "http://evo_bot_runtime:8080"
-      BOT_RUNTIME_SECRET: "bot_runtime_sec_7x8y9z0a1b2c3d4e5f"
-      BOT_RUNTIME_POSTBACK_BASE_URL: "http://evo_crm:3000"
-    networks:
-      - network_swarm_public
-    deploy:
-      replicas: 1
-
-  evo_crm_sidekiq:
-    image: lc1868/evo-ai-crm-community:latest
-    command: sh -c "bundle exec sidekiq"
-    healthcheck:
-      disable: true
-    environment:
-      RAILS_ENV: production
-      RAILS_SERVE_STATIC_FILES: "true"
-      RAILS_LOG_TO_STDOUT: "true"
-      SECRET_KEY_BASE: "5f6c823a9d1b4e2f8c5a3d7e9b0c2a4f6d8e0f1a3b5c7d9e1f2a4b6c8d0e2f4a5b"
-      JWT_SECRET_KEY: "9a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f"
-      EVOAI_CRM_API_TOKEN: "evo_token_3a1b4c5d6e7f8g9h0i1j2k3l"
-      POSTGRES_HOST: "evo-crm-db_postgres"
-      POSTGRES_PORT: 5432
-      POSTGRES_USERNAME: "evo_user"
-      POSTGRES_PASSWORD: "EvoPass2026aB0A"
-      POSTGRES_DATABASE: "evo_community"
-      POSTGRES_SSLMODE: "disable"
-      REDIS_URL: "redis://evo-crm-redis_cache:6379/1"
-      EVO_AUTH_SERVICE_URL: "http://evo_auth:3001"
-      EVO_AI_CORE_SERVICE_URL: "http://evo_core:5555"
-      BACKEND_URL: "https://apievocrm.l2csolucoes.com.br"
-      FRONTEND_URL: "https://evocrm.l2csolucoes.com.br"
-      CORS_ORIGINS: "https://evocrm.l2csolucoes.com.br,https://apievocrm.l2csolucoes.com.br"
-      DISABLE_TELEMETRY: "true"
-      LOG_LEVEL: info
-      ENABLE_ACCOUNT_SIGNUP: "true"
-      ENABLE_PUSH_RELAY_SERVER: "true"
-      ENABLE_INBOX_EVENTS: "true"
-      BOT_RUNTIME_URL: "http://evo_bot_runtime:8080"
-      BOT_RUNTIME_SECRET: "bot_runtime_sec_7x8y9z0a1b2c3d4e5f"
-      BOT_RUNTIME_POSTBACK_BASE_URL: "http://evo_crm:3000"
-    networks:
-      - network_swarm_public
-    deploy:
-      replicas: 1
-
-  # Core Service
-  evo_core:
-    image: lc1868/evo-ai-core-service-community:latest
-    environment:
-      DB_HOST: "evo-crm-db_postgres"
-      DB_PORT: "5432"
-      DB_USER: "evo_user"
-      DB_PASSWORD: "EvoPass2026aB0A"
-      DB_NAME: "evo_community"
-      DB_SSLMODE: "disable"
-      DB_MAX_IDLE_CONNS: 10
-      DB_MAX_OPEN_CONNS: 100
-      DB_CONN_MAX_LIFETIME: 1h
-      DB_CONN_MAX_IDLE_TIME: 30m
-      PORT: "5555"
-      SECRET_KEY_BASE: "5f6c823a9d1b4e2f8c5a3d7e9b0c2a4f6d8e0f1a3b5c7d9e1f2a4b6c8d0e2f4a5b"
-      JWT_SECRET_KEY: "9a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f"
-      JWT_ALGORITHM: "HS256"
-      ENCRYPTION_KEY: "XoQPOBw2FrzjQS11utERG9qO2MsAnXFxlhIns_uUxRk="
-      EVOLUTION_BASE_URL: "http://evo_crm:3000"
-      EVO_AUTH_BASE_URL: "http://evo_auth:3001"
-      AI_PROCESSOR_URL: "http://evo_processor:8000"
-      AI_PROCESSOR_VERSION: "v1"
-    networks:
-      - network_swarm_public
-    deploy:
-      replicas: 1
-
-  # Processor Service
-  evo_processor:
-    image: lc1868/evo-ai-processor-community:latest
-    command: sh -c "alembic stamp head || echo 'Already stamped'; alembic upgrade head || echo 'Migration skipped'; python -m scripts.run_seeders || echo 'Seeders skipped'; uvicorn src.main:app --host 0.0.0.0 --port 8000"
-    environment:
-      POSTGRES_CONNECTION_STRING: "postgresql://evo_user:EvoPass2026aB0A@evo-crm-db_postgres:5432/evo_community"
-      REDIS_HOST: "evo-crm-redis_cache"
-      REDIS_PORT: 6379
-      REDIS_DB: 0
-      REDIS_SSL: "false"
-      REDIS_KEY_PREFIX: "a2a:"
-      REDIS_TTL: 3600
-      HOST: 0.0.0.0
-      PORT: "8000"
-      DEBUG: "false"
-      SECRET_KEY_BASE: "5f6c823a9d1b4e2f8c5a3d7e9b0c2a4f6d8e0f1a3b5c7d9e1f2a4b6c8d0e2f4a5b"
-      ENCRYPTION_KEY: "XoQPOBw2FrzjQS11utERG9qO2MsAnXFxlhIns_uUxRk="
-      EVOAI_CRM_API_TOKEN: "evo_token_3a1b4c5d6e7f8g9h0i1j2k3l"
-      EVO_AI_CRM_URL: "http://evo_crm:3000"
-      CORE_SERVICE_URL: "http://evo_core:5555/api/v1"
-      APP_URL: "https://apievocrm.l2csolucoes.com.br"
-      API_TITLE: "Agent Processor Community"
-      API_DESCRIPTION: "Agent Processor Community for Evo AI"
-      API_VERSION: "1.0.0"
-      API_URL: "https://apievocrm.l2csolucoes.com.br"
-      ORGANIZATION_NAME: "L2C Solucoes"
-      TOOLS_CACHE_ENABLED: "true"
-      TOOLS_CACHE_TTL: 3600
-    networks:
-      - network_swarm_public
-    deploy:
-      replicas: 1
-
-  # Bot Runtime
-  evo_bot_runtime:
-    image: lc1868/evo-bot-runtime:latest
+    image: lc1868/evo-bot-runtime:1.0.0-rc4
     environment:
       LISTEN_ADDR: "0.0.0.0:8080"
       REDIS_URL: "redis://evo-crm-redis_cache:6379/1"
@@ -446,9 +268,11 @@ services:
     deploy:
       replicas: 1
 
-  # Frontend
+  # ---------------------------------------------------------------------------
+  # Frontend (React / Vite)
+  # ---------------------------------------------------------------------------
   evo_frontend:
-    image: lc1868/evo-ai-frontend-community:1.0.0-rc3
+    image: lc1868/evo-ai-frontend-community:1.0.0-rc4
     environment:
       VITE_APP_ENV: "production"
       VITE_API_URL: "https://apievocrm.l2csolucoes.com.br"
