@@ -272,7 +272,7 @@ services:
   # Frontend (React / Vite)
   # ---------------------------------------------------------------------------
   evo_frontend:
-    image: lc1868/evo-ai-frontend-community:v1.0.0-rc4-proxyconfig
+    image: lc1868/evo-ai-frontend-community:v1.0.0-rc4-proxyconfig2
     environment:
       VITE_APP_ENV: "production"
       VITE_API_URL: "https://apievocrm.l2csolucoes.com.br"

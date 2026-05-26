@@ -38,7 +38,38 @@ Formato de entrada:
 - `lc1868/evo-ai-frontend-community:v1.0.0-rc4-proxyconfig` e `latest`
   - Plataformas: `linux/amd64`, `linux/arm64`
   - Digest: `sha256:afed6f0a18a98ad91f18fa6803da73572aa6884a9f95670ed65eedc5a7ed7de9`
+- `lc1868/evo-ai-frontend-community:v1.0.0-rc4-proxyconfig2` e `latest`
+  - Motivo: exibir status `configured` como `Configurado` no painel de proxy.
+  - Plataformas: `linux/amd64`, `linux/arm64`
+  - Digest: `sha256:345faa7cf97ad8300493665deb10965d06b86fe989b16442609f3a6cd664cbf6`
 - `docs/local/stack-swarm-vps.yaml` atualizado para usar as tags versionadas acima nos services `evo_crm`, `evo_crm_sidekiq` e `evo_frontend`.
+
+---
+
+## [2026-05-26] Status configurado para proxy Evolution Go
+
+### Submodule `evolution-go` → fork `Luizcc87/evolution-go`
+
+- **Arquivo**: `pkg/instance/service/instance_service.go` `[PATCH]`
+  - Motivo: Quando uma instância tem `proxyAddress`, mas ainda não recebeu o primeiro health check, retornar `status: configured` em vez de `inactive`.
+  - Conflito no sync: baixo — lógica localizada no status/configuração de proxy.
+  - Branch: `release/lc1868-proxy-health`
+
+### Submodule `evo-ai-frontend-community` → fork `Luizcc87/evo-ai-frontend-community`
+
+- **Arquivo**: `src/components/channels/forms/whatsapp/ProxyPanel.tsx` `[PATCH]`
+  - Motivo: Exibir `configured` como `Configurado` no painel de proxy.
+  - Conflito no sync: baixo — enum/rótulo do painel de proxy.
+  - Branch: `develop`
+
+### Imagens Docker publicadas
+
+- `lc1868/evolution-go:v0.7.1-proxy-status` e `latest`
+  - Plataformas: `linux/amd64`, `linux/arm64`
+  - Digest: `sha256:dab3b4b46f34d2d0cc00129ced80b7a5fdba3dd119003e42e28a973b21d29ba0`
+- `lc1868/evo-ai-frontend-community:v1.0.0-rc4-proxyconfig2` e `latest`
+  - Plataformas: `linux/amd64`, `linux/arm64`
+  - Digest: `sha256:345faa7cf97ad8300493665deb10965d06b86fe989b16442609f3a6cd664cbf6`
 
 ---
 

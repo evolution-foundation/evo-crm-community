@@ -12,11 +12,11 @@ Define qual registry usar por serviço. Consultar antes de alterar qualquer `ima
 |:---|:---|:---|:---|:---|
 | **Auth** | `lc1868` | `lc1868/evo-auth-service-community` | `v1.0.0-rc4` | Seeds white-label + dev_admin |
 | **CRM** | `lc1868` | `lc1868/evo-ai-crm-community` | `v1.0.0-rc4` | Proxy health controller + routes.rb customizado |
-| **Frontend** | `lc1868` | `lc1868/evo-ai-frontend-community` | `v1.0.0-rc4` | White-label branding + ProxyPanel + CSP nginx |
+| **Frontend** | `lc1868` | `lc1868/evo-ai-frontend-community` | `v1.0.0-rc4-proxyconfig2` | White-label branding + ProxyPanel + CSP nginx |
 | **Processor** (Python) | `lc1868` | `lc1868/evo-ai-processor-community` | `v1.0.0-rc4` | Sem customização atual — rebuild por precaução |
 | **Core** (Go) | `lc1868` | `lc1868/evo-ai-core-service-community` | `v1.0.0-rc4` | Sem customização atual — rebuild por precaução |
 | **Bot Runtime** | `lc1868` | `lc1868/evo-bot-runtime` | `v1.0.0-rc4` | Sem customização atual — rebuild por precaução |
-| **Evolution GO** | `lc1868` | `lc1868/evolution-go` | `v0.7.1` | Proxy health monitor + API endpoint |
+| **Evolution GO** | `lc1868` | `lc1868/evolution-go` | `v0.7.1-proxy-status` | Proxy health monitor + API endpoint |
 | **Gateway** (nginx) | `lc1868` | `lc1868/evo-crm-gateway` | `1.0.0` | Config customizada |
 | **evo-flow** | build local | — | — | Build via `docker-compose.evo-flow.yml` — **nunca publicar no Docker Hub** |
 | Redis | upstream | `redis:7-alpine` | — | Sem customização |
