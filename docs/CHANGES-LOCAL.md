@@ -14,6 +14,24 @@ Formato de entrada:
 
 ---
 
+## [2026-05-25] Evolution Go proxy no Configurar Canal
+
+### Submodule `evo-ai-frontend-community` → fork `Luizcc87/evo-ai-frontend-community`
+
+- **Arquivos**: `src/components/channels/settings/ConfigurationForm.tsx`, `src/components/channels/forms/whatsapp/EvolutionGoForm.tsx`, `src/hooks/channels/useChannelForm.ts`, `src/hooks/channels/useChannelSubmission.ts`, `src/hooks/channels/useChannelValidation.ts`, `src/services/channels/evolutionGoService.ts`, `src/types/channels/inbox.ts` `[PATCH]`
+  - Motivo: Exibir o painel de status/configuração de proxy em canais Evolution Go já criados e enviar proxy durante a criação da instância.
+  - Conflito no sync: médio — áreas de formulário/criação de canais WhatsApp Evolution Go.
+  - Branch: `develop`
+
+### Submodule `evo-ai-crm-community` → fork `Luizcc87/evo-ai-crm-community`
+
+- **Arquivo**: `app/controllers/api/v1/evolution_go/authorizations_controller.rb` `[PATCH]`
+  - Motivo: Aplicar proxy na Evolution Go logo após criar a instância quando `proxy_settings.enabled` vier do painel.
+  - Conflito no sync: médio — fluxo de criação de instância Evolution Go.
+  - Branch: `develop`
+
+---
+
 ## [2026-05-21] Infraestrutura inicial do fork orquestrador
 
 ### Orquestrador (`Luizcc87/evo-crm-community`)
