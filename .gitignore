@@ -1,4 +1,7 @@
 .env
+.env.*
+!.env.example
+!.env.swarm.example
 _evo*
 
 .claude/*

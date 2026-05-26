@@ -47,11 +47,110 @@ Risk registry completo: `.agent/skills/evo-upstream-sync/references/risk-registr
 
 Registrar em `docs/CHANGES-LOCAL.md` — obrigatório.
 
-## Skills disponíveis
+## Skills disponíveis — referência rápida
 
-- Sync upstream: `.agent/skills/evo-upstream-sync/SKILL.md`
-- Commit/push por fork: `.agent/skills/evo-commit-submodules/SKILL.md`
-- Scan de mudanças: `.agent/skills/evo-commit-submodules/scripts/scan-changes.ps1`
+### evo-upstream-sync
+**Quando usar:** novo release upstream, antes de absorver mudanças dos mantenedores.
+**Skill:** `.agent/skills/evo-upstream-sync/SKILL.md`
+**Script rápido:** `.agent/skills/evo-upstream-sync/scripts/check-releases.ps1`
+**Referências:** `.agent/skills/evo-upstream-sync/references/risk-registry.md`, `references/test-checklist.md`
+
+Prompts de exemplo:
+```
+sync upstream
+verificar releases dos mantenedores
+checar novos releases nos submodules
+absorver upstream tag v1.0.0-rc5
+sincronizar com upstream
+```
+
+---
+
+### evo-commit-submodules
+**Quando usar:** após implementar feature/fix em qualquer submodule — commitar e fazer push para os forks `Luizcc87/*`.
+**Skill:** `.agent/skills/evo-commit-submodules/SKILL.md`
+**Script rápido:** `.agent/skills/evo-commit-submodules/scripts/scan-changes.ps1`
+
+Prompts de exemplo:
+```
+commit changes
+push submodule
+salvar alterações nos forks
+commitar submodules
+push para fork
+mapear mudanças por repositório
+```
+
+---
+
+### evo-docker-publish
+**Quando usar:** após commitar mudanças em Dockerfile, entrypoint ou após sync de tag — build multi-arch e push para `lc1868/*` no Docker Hub.
+**Skill:** `.agent/skills/evo-docker-publish/SKILL.md`
+**Script preflight:** `.agent/skills/evo-docker-publish/scripts/preflight.ps1`
+**Registry map:** `docs/local/IMAGE_REGISTRY_MAP.md`
+
+Prompts de exemplo:
+```
+publicar imagens
+build docker
+push para docker hub
+atualizar imagens
+rebuild image evo-ai-crm-community
+publish image versão 1.0.0-rc4
+```
+
+---
+
+### evo-dev / evo-dev-story
+**Quando usar:** implementar uma história de usuário ou feature com contexto completo do projeto.
+**Skill:** `.agent/skills/evo-dev/SKILL.md` | `.agent/skills/evo-dev-story/SKILL.md`
+
+Prompts de exemplo:
+```
+implemente a story US-42
+desenvolva a feature X conforme o spec
+implement this story
+```
+
+---
+
+### evo-code-review
+**Quando usar:** revisar diff ou PR com foco em bugs reais, segurança e cobertura.
+**Skill:** `.agent/skills/evo-code-review/SKILL.md`
+
+Prompts de exemplo:
+```
+run code review
+review this code
+faça review adversarial do diff atual
+```
+
+---
+
+### evo-quick-dev
+**Quando usar:** implementar spec técnica pequena já definida.
+**Skill:** `.agent/skills/evo-quick-dev/SKILL.md`
+
+Prompts de exemplo:
+```
+implement this quick spec
+proceed with implementation of [quick tech spec]
+```
+
+---
+
+### evo-master
+**Quando usar:** orquestrar múltiplos agentes ou navegar pelas opções do projeto (menu principal).
+**Skill:** `.agent/skills/evo-master/SKILL.md`
+
+Prompts de exemplo:
+```
+evo master
+abrir menu principal
+o que posso fazer agora?
+```
+
+---
 
 ## Documentação operacional
 
