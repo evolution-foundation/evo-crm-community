@@ -116,7 +116,7 @@ services:
   # CRM Service
   # ---------------------------------------------------------------------------
   evo_crm:
-    image: lc1868/evo-ai-crm-community:1.0.0-rc4
+    image: lc1868/evo-ai-crm-community:v1.0.0-rc4-proxyconfig
     command: sh -c "bundle exec rails db:migrate || true && bundle exec rails s -p 3000 -b 0.0.0.0"
     environment:
       RAILS_ENV: production
@@ -151,7 +151,7 @@ services:
       replicas: 1
 
   evo_crm_sidekiq:
-    image: lc1868/evo-ai-crm-community:1.0.0-rc4
+    image: lc1868/evo-ai-crm-community:v1.0.0-rc4-proxyconfig
     command: sh -c "bundle exec sidekiq"
     healthcheck:
       disable: true
@@ -272,7 +272,7 @@ services:
   # Frontend (React / Vite)
   # ---------------------------------------------------------------------------
   evo_frontend:
-    image: lc1868/evo-ai-frontend-community:1.0.0-rc4
+    image: lc1868/evo-ai-frontend-community:v1.0.0-rc4-proxyconfig
     environment:
       VITE_APP_ENV: "production"
       VITE_API_URL: "https://apievocrm.l2csolucoes.com.br"

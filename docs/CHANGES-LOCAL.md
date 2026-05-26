@@ -30,6 +30,16 @@ Formato de entrada:
   - Conflito no sync: médio — fluxo de criação de instância Evolution Go.
   - Branch: `develop`
 
+### Imagens Docker publicadas
+
+- `lc1868/evo-ai-crm-community:v1.0.0-rc4-proxyconfig` e `latest`
+  - Plataformas: `linux/amd64`, `linux/arm64`
+  - Digest: `sha256:651d56b4057c811373b6a1a220679de11b53535f58e58eedb5c6d4dd3b73d722`
+- `lc1868/evo-ai-frontend-community:v1.0.0-rc4-proxyconfig` e `latest`
+  - Plataformas: `linux/amd64`, `linux/arm64`
+  - Digest: `sha256:afed6f0a18a98ad91f18fa6803da73572aa6884a9f95670ed65eedc5a7ed7de9`
+- `docs/local/stack-swarm-vps.yaml` atualizado para usar as tags versionadas acima nos services `evo_crm`, `evo_crm_sidekiq` e `evo_frontend`.
+
 ---
 
 ## [2026-05-21] Infraestrutura inicial do fork orquestrador
