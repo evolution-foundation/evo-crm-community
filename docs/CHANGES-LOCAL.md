@@ -73,6 +73,40 @@ Formato de entrada:
 
 ---
 
+## [2026-05-26] Proxy em uso e usuário persistido no painel
+
+### Submodule `evolution-go` → fork `Luizcc87/evolution-go`
+
+- **Arquivos**: `pkg/instance/service/instance_service.go` `[PATCH]`
+  - Motivo: Retornar `proxyUsername` sem expor senha e exibir `status: connected` quando a instância está conectada com proxy configurado.
+  - Conflito no sync: baixo — lógica localizada no status/configuração de proxy.
+  - Branch: `release/lc1868-proxy-health`
+
+### Submodule `evo-ai-crm-community` → fork `Luizcc87/evo-ai-crm-community`
+
+- **Arquivo**: `app/controllers/api/v1/evolution_go/proxy_controller.rb` `[PATCH]`
+  - Motivo: Persistir o usuário do proxy em `provider_config.proxy_settings.username` e usá-lo como fallback seguro no status.
+  - Conflito no sync: baixo — endpoint específico de proxy Evolution Go.
+  - Branch: `develop`
+
+### Submodule `evo-ai-frontend-community` → fork `Luizcc87/evo-ai-frontend-community`
+
+- **Arquivos**: `src/components/channels/forms/whatsapp/ProxyPanel.tsx`, `src/components/channels/shared/FormField.tsx` `[PATCH]`
+  - Motivo: Preencher usuário salvo, manter senha vazia, reduzir autofill indevido do navegador e exibir proxy conectado como `Em uso`.
+  - Conflito no sync: baixo — painel de proxy e helper de campo de formulário.
+  - Branch: `develop`
+
+### Imagens Docker publicadas
+
+- `lc1868/evolution-go:v0.7.1-proxy-in-use` e `latest`
+  - Plataformas: `linux/amd64`, `linux/arm64`
+- `lc1868/evo-ai-crm-community:v1.0.0-rc4-proxyconfig2` e `latest`
+  - Plataformas: `linux/amd64`, `linux/arm64`
+- `lc1868/evo-ai-frontend-community:v1.0.0-rc4-proxyconfig4` e `latest`
+  - Plataformas: `linux/amd64`, `linux/arm64`
+
+---
+
 ## [2026-05-21] Infraestrutura inicial do fork orquestrador
 
 ### Orquestrador (`Luizcc87/evo-crm-community`)
