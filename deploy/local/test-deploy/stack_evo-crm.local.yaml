@@ -7,7 +7,14 @@ version: "3.8"
 services:
   # Gateway - Nginx
   evo_gateway:
-    image: lc1868/evo-crm-gateway:1.0.0
+    image: lc1868/evo-crm-gateway:1.0.0-rc10
+    environment:
+      AUTH_UPSTREAM: "evo_auth:3001"
+      CRM_UPSTREAM: "evo_crm:3000"
+      CORE_UPSTREAM: "evo_core:5555"
+      PROCESSOR_UPSTREAM: "evo_processor:8000"
+      BOT_RUNTIME_UPSTREAM: "evo_bot_runtime:8080"
+      FRONTEND_HOST: "evocrm.l2csolucoes.com.br"
     networks:
       - network_swarm_public
     deploy:

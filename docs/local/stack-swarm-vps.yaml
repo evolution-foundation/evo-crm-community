@@ -2,7 +2,7 @@ version: "3.8"
 
 # =============================================================================
 # Evo CRM Community — Stack Swarm VPS (Oracle Cloud aarch64)
-# Última atualização: 2026-05-25 — bump para v1.0.0-rc4
+# Última atualização: 2026-05-27 — bump gateway para v1.0.0-rc5 com proxy reverso para processor
 # =============================================================================
 
 services:
@@ -11,13 +11,14 @@ services:
   # Gateway — Nginx reverse proxy
   # ---------------------------------------------------------------------------
   evo_gateway:
-    image: lc1868/evo-crm-gateway:1.0.0-rc4
+    image: lc1868/evo-crm-gateway:latest
     environment:
       AUTH_UPSTREAM: "evo_auth:3001"
       CRM_UPSTREAM: "evo_crm:3000"
       CORE_UPSTREAM: "evo_core:5555"
       PROCESSOR_UPSTREAM: "evo_processor:8000"
       BOT_RUNTIME_UPSTREAM: "evo_bot_runtime:8080"
+      FRONTEND_HOST: "evocrm.l2csolucoes.com.br"
     networks:
       - network_swarm_public
     deploy:
@@ -35,7 +36,7 @@ services:
   # Auth Service
   # ---------------------------------------------------------------------------
   evo_auth:
-    image: lc1868/evo-auth-service-community:1.0.0-rc4
+    image: lc1868/evo-auth-service-community:latest
     command: sh -c "bundle exec rails db:migrate 2>&1 || echo 'Migration had errors, continuing...'; bundle exec rails s -p 3001 -b 0.0.0.0"
     environment:
       RAILS_ENV: production
@@ -73,7 +74,7 @@ services:
       replicas: 1
 
   evo_auth_sidekiq:
-    image: lc1868/evo-auth-service-community:1.0.0-rc4
+    image: lc1868/evo-auth-service-community:latest
     command: sh -c "bundle exec sidekiq"
     healthcheck:
       disable: true
@@ -116,7 +117,7 @@ services:
   # CRM Service
   # ---------------------------------------------------------------------------
   evo_crm:
-    image: lc1868/evo-ai-crm-community:v1.0.0-rc4-proxyconfig2
+    image: lc1868/evo-ai-crm-community:latest
     command: sh -c "bundle exec rails db:migrate || true && bundle exec rails s -p 3000 -b 0.0.0.0"
     environment:
       RAILS_ENV: production
@@ -151,7 +152,7 @@ services:
       replicas: 1
 
   evo_crm_sidekiq:
-    image: lc1868/evo-ai-crm-community:v1.0.0-rc4-proxyconfig2
+    image: lc1868/evo-ai-crm-community:latest
     command: sh -c "bundle exec sidekiq"
     healthcheck:
       disable: true
@@ -191,7 +192,7 @@ services:
   # Core Service (Go)
   # ---------------------------------------------------------------------------
   evo_core:
-    image: lc1868/evo-ai-core-service-community:1.0.0-rc4
+    image: lc1868/evo-ai-core-service-community:latest
     environment:
       DB_HOST: "evo-crm-db_postgres"
       DB_PORT: "5432"
@@ -221,7 +222,7 @@ services:
   # Processor Service (Python / FastAPI)
   # ---------------------------------------------------------------------------
   evo_processor:
-    image: lc1868/evo-ai-processor-community:1.0.0-rc4
+    image: lc1868/evo-ai-processor-community:latest
     command: sh -c "alembic stamp head || echo 'Already stamped'; alembic upgrade head || echo 'Migration skipped'; python -m scripts.run_seeders || echo 'Seeders skipped'; uvicorn src.main:app --host 0.0.0.0 --port 8000"
     environment:
       POSTGRES_CONNECTION_STRING: "postgresql://evo_user:EvoPass2026aB0A@evo-crm-db_postgres:5432/evo_community"
@@ -247,6 +248,7 @@ services:
       ORGANIZATION_NAME: "L2C Solucoes"
       TOOLS_CACHE_ENABLED: "true"
       TOOLS_CACHE_TTL: 3600
+      EVO_AUTH_BASE_URL: "http://evo_auth:3001"
     networks:
       - network_swarm_public
     deploy:
@@ -256,7 +258,7 @@ services:
   # Bot Runtime (Go)
   # ---------------------------------------------------------------------------
   evo_bot_runtime:
-    image: lc1868/evo-bot-runtime:1.0.0-rc4
+    image: lc1868/evo-bot-runtime:latest
     environment:
       LISTEN_ADDR: "0.0.0.0:8080"
       REDIS_URL: "redis://evo-crm-redis_cache:6379/1"
@@ -272,7 +274,7 @@ services:
   # Frontend (React / Vite)
   # ---------------------------------------------------------------------------
   evo_frontend:
-    image: lc1868/evo-ai-frontend-community:v1.0.0-rc4-proxyconfig4
+    image: lc1868/evo-ai-frontend-community:latest
     environment:
       VITE_APP_ENV: "production"
       VITE_API_URL: "https://apievocrm.l2csolucoes.com.br"
