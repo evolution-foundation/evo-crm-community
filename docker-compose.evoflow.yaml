@@ -1,0 +1,95 @@
+# Override que adiciona evo-flow + ClickHouse ao MESMO projeto/rede do
+# docker-compose.yml principal (rede default `evo-crm-community_default`),
+# para que o container evo-crm alcance http://evo-flow:3334 por hostname.
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.evoflow.yaml up -d --build clickhouse evo-flow
+#
+# Modo mínimo de boot (sem Kafka/Temporal): RUN_MODE=api + QUEUE_MODE=direct +
+# WRITE_MODE=ch-sync + STORAGE_MODE=clickhouse. Serve a API de eventos (write
+# síncrono direto no ClickHouse) e a leitura GET /contacts/:id/events.
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DB: default
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--user", "default", "--password", "password", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  evo-flow:
+    build:
+      context: ./evo-flow
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3334:3334"
+    # Recorrência: o banco Postgres do evo-flow é DEDICADO (evo_campaign) — NÃO
+    # compartilha o evo_community do CRM (as migrations do evo-flow criam tabelas
+    # contacts/labels/custom_attribute_definitions que colidiriam com o Chatwoot;
+    # o evo-flow lê o CRM via HTTP, não via Postgres). Como o evo-flow não tem
+    # passo oficial de db:create, este command cria o DB se faltar + roda as
+    # migrations (idempotente) + sobe a app — sem nenhum passo manual.
+    command:
+      - sh
+      - -c
+      - |
+        node -e 'const{Client}=require("pg");const db=process.env.POSTGRES_DB_DATABASE;const c=new Client({host:process.env.POSTGRES_DB_HOST,port:+(process.env.POSTGRES_DB_PORT||5432),user:process.env.POSTGRES_DB_USERNAME,password:process.env.POSTGRES_DB_PASSWORD,database:"postgres"});c.connect().then(()=>c.query("CREATE DATABASE "+db)).then(()=>console.log("[init] created "+db)).catch(e=>console.log("[init] "+(e.code==="42P04"?"db already exists":e.message))).finally(()=>c.end());'
+        node_modules/.bin/typeorm migration:run -d dist/database/ormconfig.js || echo "[init] migration:run failed (continuing)"
+        exec node dist/main.js
+    environment:
+      NODE_ENV: development
+      # api + QUEUE_MODE=direct: UM container só. api serve a HTTP (leitura +
+      # ingestão) e o DirectQueueProcessor grava DIRETO no ClickHouse na própria
+      # request (sem fila/broker, sem worker/consumer). 'direct' foi adicionado
+      # ao QueueProcessorFactory (antes era um gap). 'single' travaria o HTTP na
+      # Journey Trigger Queue (Kafka); 'api' não trava.
+      RUN_MODE: api
+      QUEUE_MODE: direct
+      STORAGE_MODE: clickhouse
+      WRITE_MODE: ch-sync
+      PORT: "3334"
+      # Auth de serviço — MESMO valor que AUTH_APIKEY_INTEGRATION_LOCAL no .env do CRM
+      AUTH_APIKEY_INTEGRATION_LOCAL: ${AUTH_APIKEY_INTEGRATION_LOCAL:-evoflow-dev-key}
+      EVO_AUTH_SERVICE_URL: http://evo-auth:3001
+      EVO_AUTH_VALIDATE_TOKEN_ENDPOINT: /api/v1/auth/validate
+      # ClickHouse (mesmo container desta override)
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_DATABASE: evo_campaign
+      CLICKHOUSE_USERNAME: default
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_TABLE: contact_events
+      # Postgres (TypeORM conecta no boot — usa o postgres compartilhado, DB evo_campaign)
+      POSTGRES_DB_HOST: postgres
+      POSTGRES_DB_PORT: "5432"
+      POSTGRES_DB_USERNAME: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_DB_PASSWORD: ${POSTGRES_PASSWORD:-evoai_dev_password}
+      POSTGRES_DB_DATABASE: evo_campaign
+      # CRM client (enriquecimento / chamadas reversas)
+      EVOAI_CRM_BASE_URL: http://evo-crm:3000
+      EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN:-6e10e689-58ce-4416-bf0d-f5818bf2dcf8}
+      LOG_LEVEL: log
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+volumes:
+  clickhouse_data:
