@@ -2,7 +2,14 @@
 # docker-compose.yml principal (rede default `evo-crm-community_default`),
 # para que o container evo-crm alcance http://evo-flow:3334 por hostname.
 #
+# PRÉ-REQUISITO: o evo-flow NÃO é submódulo deste umbrella (removido nos
+# rc4/rc5) e o diretório ./evo-flow é gitignored. O serviço evo-flow abaixo
+# builda de `context: ./evo-flow`, então num clone fresco esse path não
+# existe — é preciso cloná-lo na raiz do umbrella antes de subir:
+#   git clone https://github.com/evolution-foundation/evo-flow.git ./evo-flow
+#
 # Uso:
+#   git clone https://github.com/evolution-foundation/evo-flow.git ./evo-flow   # só na 1ª vez
 #   docker compose -f docker-compose.yml -f docker-compose.evoflow.yaml up -d --build clickhouse evo-flow
 #
 # Modo mínimo de boot (sem Kafka/Temporal): RUN_MODE=api + QUEUE_MODE=direct +
