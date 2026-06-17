@@ -141,14 +141,13 @@ services:
       - ./evo-flow/docker/temporal:/etc/temporal/config/dynamicconfig
     restart: unless-stopped
     healthcheck:
+      # Temporal binds to the container IP, not localhost — probe the real bind
+      # address so the check reflects actual availability (EVO-1755). $$ escapes
+      # the $ so compose passes a literal $(hostname -i) to the container shell.
       test:
         [
-          "CMD",
-          "tctl",
-          "--address",
-          "localhost:7233",
-          "workflow",
-          "list",
+          "CMD-SHELL",
+          "tctl --address $$(hostname -i):7233 workflow list",
         ]
       interval: 30s
       timeout: 10s
