@@ -63,7 +63,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: bash -c "rm -f /rails/tmp/pids/server.pid && bundle install && bundle exec rails db:create && bundle exec rails db:migrate && bundle exec rails s -p 3001 -b 0.0.0.0"
+    command: bash -c "rm -f /rails/tmp/pids/server.pid && bundle install && bundle exec rails db:prepare && bundle exec rails s -p 3001 -b 0.0.0.0"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
