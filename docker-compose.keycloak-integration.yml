@@ -1,0 +1,103 @@
+# =============================================================================
+# Keycloak Integration - Docker Compose Extension
+# =============================================================================
+# Este archivo extiende docker-compose.yml con Keycloak + MySQL + integración.
+# Úsalo cuando necesites autenticación SSO.
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.keycloak-integration.yml up -d
+#
+# Sin Keycloak (solo app):
+#   docker compose up -d
+# =============================================================================
+
+services:
+  # Keycloak Server
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    restart: unless-stopped
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://db-keycloak:3306/keycloak_db
+      KC_DB_USERNAME: keycloak_user
+      KC_DB_PASSWORD: keycloak_password
+    ports:
+      - "8081:8080"
+    depends_on:
+      db-keycloak:
+        condition: service_healthy
+    command: ["start-dev"]
+    networks:
+      - keycloak-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  # Keycloak Database
+  db-keycloak:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_USER: keycloak_user
+      MYSQL_PASSWORD: keycloak_password
+      MYSQL_DATABASE: keycloak_db
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - 3366:3306
+    volumes:
+      - db-keycloak-data:/var/lib/mysql
+    networks:
+      - keycloak-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "keycloak_user", "-pkeycloak_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Auth service integration with Keycloak
+  evo-auth:
+    networks:
+      - default
+      - keycloak-network
+    environment:
+      # Asegurar que las variables de Keycloak estén disponibles
+      KEYCLOAK_ENABLED: ${KEYCLOAK_ENABLED:-true}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER:-http://localhost:8081/realms/organization}
+      KEYCLOAK_INTERNAL_URL: ${KEYCLOAK_INTERNAL_URL:-http://keycloak:8080/realms/organization}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-organization-crm-frontend}
+      KEYCLOAK_SSL_VERIFY: ${KEYCLOAK_SSL_VERIFY:-false}
+
+  # Frontend with Keycloak build args and environment
+  evo-frontend:
+    build:
+      context: ./evo-ai-frontend-community
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+        VITE_AUTH_API_URL: ${VITE_AUTH_API_URL:-http://localhost:3001}
+        VITE_EVOAI_API_URL: ${VITE_EVOAI_API_URL:-http://localhost:5555}
+        VITE_AGENT_PROCESSOR_URL: ${VITE_AGENT_PROCESSOR_URL:-http://localhost:8000}
+        VITE_KEYCLOAK_ENABLED: ${VITE_KEYCLOAK_ENABLED:-true}
+        VITE_KEYCLOAK_ISSUER: ${VITE_KEYCLOAK_ISSUER:-http://localhost:8081/realms/organization}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-organization-crm-frontend}
+    environment:
+      VITE_KEYCLOAK_ENABLED: ${VITE_KEYCLOAK_ENABLED:-true}
+      VITE_KEYCLOAK_ISSUER: ${VITE_KEYCLOAK_ISSUER:-http://localhost:8081/realms/organization}
+      VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-organization-crm-frontend}
+      VITE_KEYCLOAK_REDIRECT_URI: ${VITE_KEYCLOAK_REDIRECT_URI:-http://localhost:5173/auth/callback}
+
+volumes:
+  db-keycloak-data:
+
+networks:
+  keycloak-network:
+    driver: bridge

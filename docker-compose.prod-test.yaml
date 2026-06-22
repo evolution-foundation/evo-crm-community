@@ -202,6 +202,10 @@ services:
       REDIS_URL: redis://:evoai_redis_pass@evo_redis:6379/0
       EVO_AUTH_SERVICE_URL: http://evo_auth:3001
       EVO_AI_CORE_SERVICE_URL: http://evo_core:5555
+      # RAILS_ENV=production requires these (config/environments/production.rb);
+      # without them Sidekiq aborts at boot ("BACKEND_URL must be set ...").
+      BACKEND_URL: "${BACKEND_URL:?BACKEND_URL must be set to a non-localhost URL for prod-test (e.g. http://host.docker.internal:3030)}"
+      FRONTEND_URL: "${FRONTEND_URL:?FRONTEND_URL must be set to a non-localhost URL for prod-test (e.g. http://host.docker.internal:5173)}"
       BOT_RUNTIME_URL: http://evo_bot_runtime:8080
       BOT_RUNTIME_SECRET: evo-bot-runtime-dev-secret
       BOT_RUNTIME_POSTBACK_BASE_URL: http://evo_crm:3000
