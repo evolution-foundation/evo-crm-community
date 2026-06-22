@@ -283,6 +283,9 @@ services:
         VITE_AUTH_API_URL: ${VITE_AUTH_API_URL:-http://localhost:3001}
         VITE_EVOAI_API_URL: ${VITE_EVOAI_API_URL:-http://localhost:5555}
         VITE_AGENT_PROCESSOR_URL: ${VITE_AGENT_PROCESSOR_URL:-http://localhost:8000}
+        VITE_KEYCLOAK_ENABLED: ${VITE_KEYCLOAK_ENABLED:-false}
+        VITE_KEYCLOAK_ISSUER: ${VITE_KEYCLOAK_ISSUER:-}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-}
     restart: unless-stopped
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
@@ -290,6 +293,10 @@ services:
       VITE_WS_URL: ${VITE_WS_URL:-http://localhost:3000}
       VITE_EVOAI_API_URL: ${VITE_EVOAI_API_URL:-http://localhost:5555}
       VITE_AGENT_PROCESSOR_URL: ${VITE_AGENT_PROCESSOR_URL:-http://localhost:8000}
+      VITE_KEYCLOAK_ENABLED: ${VITE_KEYCLOAK_ENABLED:-false}
+      VITE_KEYCLOAK_ISSUER: ${VITE_KEYCLOAK_ISSUER:-}
+      VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-}
+      VITE_KEYCLOAK_REDIRECT_URI: ${VITE_KEYCLOAK_REDIRECT_URI:-}
     ports:
       - "5173:80"
     depends_on:

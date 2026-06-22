@@ -1,0 +1,214 @@
+# =============================================================================
+# Keycloak — Production-like Test (TLS / HTTPS) Extension
+# =============================================================================
+# Extends docker-compose.prod-test.yaml (real Docker Hub images, nginx gateway,
+# RAILS_ENV=production) with a Keycloak server that terminates TLS itself,
+# reproducing the production scenario as closely as possible:
+#
+#   - Keycloak serves HTTPS on https://keycloak.localhost:8443 with a cert
+#     signed by a local CA (see ./keycloak-certs/generate-certs.sh).
+#   - The BROWSER and the AUTH BACKEND reach Keycloak through the SAME hostname
+#     (keycloak.localhost:8443) thanks to a Docker network alias, so the token
+#     `iss` claim matches KEYCLOAK_ISSUER exactly (the #1 prod gotcha).
+#   - KEYCLOAK_SSL_VERIFY=true with SSL_CERT_FILE pointing at the local CA, so
+#     the JWKS fetch and code exchange genuinely validate the TLS chain.
+#
+# Prerequisites:
+#   1. ./keycloak-certs/generate-certs.sh
+#   2. Most browsers resolve *.localhost -> 127.0.0.1 automatically. For curl and
+#      as a fallback, add to /etc/hosts:   127.0.0.1  keycloak.localhost
+#
+# Usage:
+#   ./keycloak-certs/generate-certs.sh
+#   BACKEND_URL=http://host.docker.internal:3030 \
+#   FRONTEND_URL=http://host.docker.internal:5173 \
+#     docker compose \
+#       -f docker-compose.prod-test.yaml \
+#       -f docker-compose.keycloak-prod-test.yaml up -d
+#
+# Realm and client come from the project .env (KEYCLOAK_CLIENT_ID) so they stay in
+# sync with the rest of the stack; override the realm with KEYCLOAK_REALM if needed.
+# Defaults: realm `arba`, client `arba-crm-frontend`.
+#
+# Configure in the Keycloak admin console (https://keycloak.localhost:8443/admin,
+# admin/admin) a realm `arba` + public PKCE client `arba-crm-frontend`
+# with redirect URI http://localhost:5173/* and web origin http://localhost:5173.
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Keycloak Database
+  # ---------------------------------------------------------------------------
+  db-keycloak:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_USER: keycloak_user
+      MYSQL_PASSWORD: keycloak_password
+      MYSQL_DATABASE: keycloak_db
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - db-keycloak-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "keycloak_user", "-pkeycloak_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Keycloak Server (production mode + native TLS)
+  # ---------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    restart: unless-stopped
+    command: ["start"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      # Database
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://db-keycloak:3306/keycloak_db
+      KC_DB_USERNAME: keycloak_user
+      KC_DB_PASSWORD: keycloak_password
+      # Hostname v2: full public URL -> defines the token `iss` claim.
+      KC_HOSTNAME: https://keycloak.localhost:8443
+      KC_HOSTNAME_STRICT: "true"
+      # Native TLS (no HTTP listener — production-like).
+      KC_HTTP_ENABLED: "false"
+      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/certs/keycloak.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/certs/keycloak.key
+      # Health/metrics on the management port (9000).
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./keycloak-certs:/opt/keycloak/certs:ro
+    ports:
+      - "8443:8443"
+    depends_on:
+      db-keycloak:
+        condition: service_healthy
+    networks:
+      default:
+        # The auth backend reaches Keycloak via this alias over TLS, using the
+        # exact same hostname the browser uses -> consistent `iss` + valid cert.
+        aliases:
+          - keycloak.localhost
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+
+  # ---------------------------------------------------------------------------
+  # Auth Service — Keycloak integration over TLS + server.pid cleanup
+  # ---------------------------------------------------------------------------
+  evo_auth:
+    # TEMPORARY — build from local source until the default-role fix is published.
+    # The published :latest image ships an older UserProvisioner whose default-role
+    # assignment is commented out, so users whose Keycloak roles don't match a local
+    # Role end up with no roles; the local source assigns `agent` as a fallback.
+    #
+    # ONCE THE FIX IS PUBLISHED: delete the `build:` block and the
+    # `image: evo-auth-service-community:local-kc` line below, then uncomment the
+    # published image line (same value as the prod-test base file).
+    # image: evoapicloud/evo-auth-service-community:latest
+    build:
+      context: ./evo-auth-service-community
+    image: evo-auth-service-community:local-kc
+    command: sh -c "rm -f /app/tmp/pids/server.pid && bundle exec rails db:prepare && bundle exec rails s -p 3001 -b 0.0.0.0"
+    environment:
+      # Logout builds post_logout_redirect_uri from FRONTEND_URL. The browser
+      # reaches the app at localhost:5173 (and that's what's registered in the
+      # Keycloak client), so use localhost here — the base host.docker.internal
+      # value isn't resolvable from the host browser and isn't a registered URI.
+      FRONTEND_URL: http://localhost:5173
+      KEYCLOAK_ENABLED: "true"
+      KEYCLOAK_ISSUER: https://keycloak.localhost:8443/realms/${KEYCLOAK_REALM:-arba}
+      KEYCLOAK_INTERNAL_URL: https://keycloak.localhost:8443/realms/${KEYCLOAK_REALM:-arba}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-arba-crm-frontend}
+      KEYCLOAK_ROLES_CLAIM: realm_access.roles
+      # Production-like: verify the TLS chain against our local CA.
+      KEYCLOAK_SSL_VERIFY: "true"
+      # Ruby/OpenSSL honours SSL_CERT_FILE for the default trust store.
+      SSL_CERT_FILE: /certs/keycloak-ca.crt
+    volumes:
+      - ./keycloak-certs:/certs:ro
+    depends_on:
+      keycloak:
+        condition: service_healthy
+
+  evo_auth_sidekiq:
+    # TEMPORARY — same as evo_auth: build from local source until the fix is published.
+    # ONCE THE FIX IS PUBLISHED: delete the `build:` block and the
+    # `image: evo-auth-service-community:local-kc` line below, then uncomment:
+    # image: evoapicloud/evo-auth-service-community:latest
+    build:
+      context: ./evo-auth-service-community
+    image: evo-auth-service-community:local-kc
+    environment:
+      # The base prod-test evo_auth_sidekiq env omits the DOORKEEPER_* vars that
+      # the web evo_auth defines; the local source reads DOORKEEPER_JWT_SECRET_KEY
+      # via fetch at boot, so Sidekiq crashes ("key not found") without them.
+      DOORKEEPER_JWT_SECRET_KEY: "a]i9F#k2$$Lm7Nq0R!sT4uW6xZ8bD1eG3hJ5oP7rV9yAcE2fH4jM6pS8vX0zB3dK5nQ7tU9wY1"
+      DOORKEEPER_JWT_ALGORITHM: hs256
+      DOORKEEPER_JWT_ISS: evo-auth-service
+      KEYCLOAK_ENABLED: "true"
+      KEYCLOAK_ISSUER: https://keycloak.localhost:8443/realms/${KEYCLOAK_REALM:-arba}
+      KEYCLOAK_INTERNAL_URL: https://keycloak.localhost:8443/realms/${KEYCLOAK_REALM:-arba}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-arba-crm-frontend}
+      KEYCLOAK_ROLES_CLAIM: realm_access.roles
+      KEYCLOAK_SSL_VERIFY: "true"
+      SSL_CERT_FILE: /certs/keycloak-ca.crt
+    volumes:
+      - ./keycloak-certs:/certs:ro
+
+  # ---------------------------------------------------------------------------
+  # CRM Service — healthcheck override + server.pid cleanup
+  # ---------------------------------------------------------------------------
+  # The base prod-test healthcheck runs `curl -f http://localhost:3000/auth/sign_in`,
+  # but the CRM image ships WITHOUT curl (nor bash), so the check always errors with
+  # "executable file not found" and the container stays "unhealthy" — which blocks
+  # evo_gateway (depends_on CRM healthy), so nothing listens on :3030.
+  # The image provides BusyBox `nc`; a TCP probe on 3000 confirms Puma is serving.
+  # Use 127.0.0.1 (not localhost): BusyBox nc resolves localhost to IPv6 ::1,
+  # but Puma listens on IPv4 0.0.0.0 only, so `localhost` would always fail.
+  #
+  # Also remove server.pid before starting to avoid "server is already running" errors
+  # when the container is stopped abruptly and restarted.
+  evo_crm:
+    command: sh -c "rm -f /app/tmp/pids/server.pid && bundle exec rails db:prepare && bundle exec rails s -p 3000 -b 0.0.0.0"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "-w", "2", "127.0.0.1", "3000"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+
+  # ---------------------------------------------------------------------------
+  # Frontend — Keycloak vars injected at runtime (docker-entrypoint.sh)
+  # ---------------------------------------------------------------------------
+  evo_frontend:
+    # TEMPORARY — build from local source. The ProfileMenu multi-role fix lives in
+    # the feat/keycloak-integration branch (not yet in main), so the published
+    # :latest image renders the old single-role layout. The placeholder + runtime
+    # sed mechanism still applies to a local build, so VITE_* env injection works.
+    # ONCE MERGED & PUBLISHED: delete the `build:` block and the
+    # `image: evo-ai-frontend-community:local-kc` line, then uncomment:
+    # image: evoapicloud/evo-ai-frontend-community:latest
+    build:
+      context: ./evo-ai-frontend-community
+      args:
+        VITE_KEYCLOAK_ENABLED: "true"
+        VITE_KEYCLOAK_ISSUER: https://keycloak.localhost:8443/realms/${KEYCLOAK_REALM:-arba}
+        VITE_KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-arba-crm-frontend}
+    image: evo-ai-frontend-community:local-kc
+    depends_on:
+      keycloak:
+        condition: service_started
+      evo_gateway:
+        condition: service_started
+
+volumes:
+  db-keycloak-data:
