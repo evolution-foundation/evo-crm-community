@@ -229,12 +229,15 @@ services:
       PORT: "8000"
       EVO_AI_CRM_URL: http://evo-crm:3000
       CORE_SERVICE_URL: http://evo-core:5555/api/v1
+      EVO_AUTH_BASE_URL: http://evo-auth:3001
     volumes:
       - processor_logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      evo-auth:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
