@@ -106,6 +106,12 @@ services:
     ports:
       - "3000:3000"
     env_file: .env
+    # host.docker.internal is provided by Docker Desktop on macOS/Windows but
+    # NOT by stock Docker Engine on Linux — the extra_hosts entry below mirrors
+    # the Desktop alias for parity, so ACTIVE_STORAGE_URL=http://host.docker.internal:3000
+    # (see .env.example) works across all platforms (EVO-1747).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
       REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/0
@@ -149,6 +155,10 @@ services:
         RAILS_SERVE_STATIC_FILES: "false"
     restart: unless-stopped
     env_file: .env
+    # Same Linux/Desktop parity alias as evo-crm — Sidekiq jobs also generate
+    # ActiveStorage URLs (Evolution send path) and need to reach host:3000.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
       REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/0
