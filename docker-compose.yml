@@ -195,10 +195,10 @@ services:
   # Core Service (Go / Gin) — Port 5555
   # ---------------------------------------------------------------------------
   evo-core:
-    # NOTE: the Community Dockerfile build is broken — go.mod has a
-    # `replace ... => ../evo-crm-enterprise/...` that fails `go mod download`
-    # in a Community-only checkout. Reuse the already-built dev image instead.
-    image: evo-ai-core-service:dev
+    # Pulled from Docker Hub — same public image used by prod-test and swarm.
+    # (To develop the Core locally, swap this for a `build:` against
+    # ./evo-ai-core-service-community using a community modfile.)
+    image: evoapicloud/evo-ai-core-service-community:latest
     restart: unless-stopped
     ports:
       - "5565:5555"
@@ -391,17 +391,17 @@ services:
       context: ./evo-ai-frontend-community
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
-        VITE_AUTH_API_URL: ${VITE_AUTH_API_URL:-http://localhost:3001}
-        VITE_EVOAI_API_URL: ${VITE_EVOAI_API_URL:-http://localhost:5555}
-        VITE_AGENT_PROCESSOR_URL: ${VITE_AGENT_PROCESSOR_URL:-http://localhost:8000}
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3010}
+        VITE_AUTH_API_URL: ${VITE_AUTH_API_URL:-http://localhost:3011}
+        VITE_EVOAI_API_URL: ${VITE_EVOAI_API_URL:-http://localhost:5565}
+        VITE_AGENT_PROCESSOR_URL: ${VITE_AGENT_PROCESSOR_URL:-http://localhost:8011}
     restart: unless-stopped
     environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
-      VITE_AUTH_API_URL: ${VITE_AUTH_API_URL:-http://localhost:3001}
-      VITE_WS_URL: ${VITE_WS_URL:-http://localhost:3000}
-      VITE_EVOAI_API_URL: ${VITE_EVOAI_API_URL:-http://localhost:5555}
-      VITE_AGENT_PROCESSOR_URL: ${VITE_AGENT_PROCESSOR_URL:-http://localhost:8000}
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3010}
+      VITE_AUTH_API_URL: ${VITE_AUTH_API_URL:-http://localhost:3011}
+      VITE_WS_URL: ${VITE_WS_URL:-http://localhost:3010}
+      VITE_EVOAI_API_URL: ${VITE_EVOAI_API_URL:-http://localhost:5565}
+      VITE_AGENT_PROCESSOR_URL: ${VITE_AGENT_PROCESSOR_URL:-http://localhost:8011}
       VITE_EVOFLOW_API_URL: ${VITE_EVOFLOW_API_URL:-http://localhost:3334}
     ports:
       - "5173:80"

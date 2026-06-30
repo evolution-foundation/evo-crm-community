@@ -265,6 +265,7 @@ services:
       ENCRYPTION_KEY: XoQPOBw2FrzjQS11utERG9qO2MsAnXFxlhIns_uUxRk=
       EVOAI_CRM_API_TOKEN: 6e10e689-58ce-4416-bf0d-f5818bf2dcf8
       EVO_AI_CRM_URL: http://evo_crm:3000
+      EVO_AUTH_BASE_URL: http://evo_auth:3001
       CORE_SERVICE_URL: http://evo_core:5555/api/v1
       APP_URL: http://localhost:8000
       API_TITLE: Agent Processor Community
@@ -310,6 +311,7 @@ services:
       VITE_APP_ENV: production
       VITE_API_URL: http://localhost:3030
       VITE_AUTH_API_URL: http://localhost:3030
+      VITE_WS_URL: http://localhost:3030
       VITE_EVOAI_API_URL: http://localhost:3030
       VITE_AGENT_PROCESSOR_URL: http://localhost:3030
 
