@@ -1,24 +1,24 @@
 [submodule "evo-auth-service-community"]
 	path = evo-auth-service-community
-	url = git@github.com:EvolutionAPI/evo-auth-service-community.git
+	url = https://github.com/EvolutionAPI/evo-auth-service-community.git
 [submodule "evo-ai-crm-community"]
 	path = evo-ai-crm-community
-	url = git@github.com:EvolutionAPI/evo-ai-crm-community.git
+	url = https://github.com/EvolutionAPI/evo-ai-crm-community.git
 [submodule "evo-ai-frontend-community"]
 	path = evo-ai-frontend-community
-	url = git@github.com:EvolutionAPI/evo-ai-frontend-community.git
+	url = https://github.com/EvolutionAPI/evo-ai-frontend-community.git
 [submodule "evo-ai-processor-community"]
 	path = evo-ai-processor-community
-	url = git@github.com:EvolutionAPI/evo-ai-processor-community.git
+	url = https://github.com/EvolutionAPI/evo-ai-processor-community.git
 [submodule "evo-ai-core-service-community"]
 	path = evo-ai-core-service-community
-	url = git@github.com:EvolutionAPI/evo-ai-core-service-community.git
+	url = https://github.com/EvolutionAPI/evo-ai-core-service-community.git
 [submodule "evolution-api"]
 	path = evolution-api
-	url = git@github.com:EvolutionAPI/evolution-api.git
+	url = https://github.com/EvolutionAPI/evolution-api.git
 [submodule "evolution-go"]
 	path = evolution-go
-	url = git@github.com:EvolutionAPI/evolution-go.git
+	url = https://github.com/EvolutionAPI/evolution-go.git
 [submodule "evo-bot-runtime"]
 	path = evo-bot-runtime
-	url = git@github.com:EvolutionAPI/evo-bot-runtime.git
+	url = https://github.com/EvolutionAPI/evo-bot-runtime.git

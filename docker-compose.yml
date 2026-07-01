@@ -61,9 +61,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: bash -c "bundle install && bundle exec rails db:prepare && bundle exec rails s -p 3001 -b 0.0.0.0"
+    command: bash -c "bundle install && rm -f /rails/tmp/pids/server.pid && bundle exec rails db:prepare && bundle exec rails s -p 3001 -b 0.0.0.0"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:3001/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -103,6 +103,8 @@ services:
     env_file: .env
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
+      RAILS_LOG_TO_STDOUT: "true"
+      DISABLE_BOOTSNAP: "true"
       REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/0
       POSTGRES_HOST: postgres
       EVO_AUTH_SERVICE_URL: http://evo-auth:3001
@@ -123,13 +125,13 @@ services:
       evo-auth:
         condition: service_healthy
     entrypoint: docker/entrypoints/rails.sh
-    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+    command: ["sh", "-c", "rm -f /app/tmp/pids/server.pid && bundle exec rails db:prepare && bundle exec rails s -p 3000 -b 0.0.0.0"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health/live"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:3000/health/live"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 120s
+      start_period: 600s
 
   evo-crm-sidekiq:
     build:
@@ -143,6 +145,8 @@ services:
     env_file: .env
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
+      RAILS_LOG_TO_STDOUT: "true"
+      DISABLE_BOOTSNAP: "true"
       REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/0
       POSTGRES_HOST: postgres
       EVO_AUTH_SERVICE_URL: http://evo-auth:3001
@@ -164,7 +168,7 @@ services:
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
 
   # ---------------------------------------------------------------------------
-  # Core Service (Go / Gin) — Port 5555
+  # Core Service (Go / Gin) — Port 5556
   # ---------------------------------------------------------------------------
   evo-core:
     build:
@@ -189,7 +193,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5555/api/v1/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5555/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -218,20 +222,21 @@ services:
       CORE_SERVICE_URL: http://evo-core:5555/api/v1
     volumes:
       - processor_logs:/app/logs
+    command: ["sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port 8000"]
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
 
   # ---------------------------------------------------------------------------
-  # Bot Runtime (Go / Gin) — Port 8080
+  # Bot Runtime (Go / Gin) — Port 8081
   # ---------------------------------------------------------------------------
   evo-bot-runtime:
     build:
@@ -239,7 +244,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8081:8080"
     env_file: .env
     environment:
       LISTEN_ADDR: 0.0.0.0:8080
@@ -252,14 +257,14 @@ services:
       evo-processor:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/health"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 15s
 
   # ---------------------------------------------------------------------------
-  # Frontend (React / Vite / Nginx) — Port 5173
+  # Frontend (React / Vite / Nginx) — Port 5174
   # ---------------------------------------------------------------------------
   evo-frontend:
     build:
@@ -278,14 +283,14 @@ services:
       VITE_EVOAI_API_URL: ${VITE_EVOAI_API_URL:-http://localhost:5555}
       VITE_AGENT_PROCESSOR_URL: ${VITE_AGENT_PROCESSOR_URL:-http://localhost:8000}
     ports:
-      - "5173:80"
+      - "5174:80"
     depends_on:
       evo-auth:
         condition: service_healthy
       evo-crm:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:80/health"]
       interval: 15s
       timeout: 5s
       retries: 3
