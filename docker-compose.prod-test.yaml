@@ -177,7 +177,7 @@ services:
       evo_auth:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/auth/sign_in"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/health/live"]
       interval: 30s
       timeout: 10s
       retries: 5
