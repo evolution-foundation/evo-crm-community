@@ -1,20 +1,25 @@
 # =============================================================================
-# Evo CRM Community - Local Production Test
+# Evo CRM Community — Review environment  (INTERNAL team tooling)
 # =============================================================================
-# Simulates the production swarm stack locally using docker compose.
-# Uses the same Docker Hub images that would run in production.
+# NOT part of the self-host quick start. Runs the published Docker Hub images
+# as a full local stack so a reviewer can TEST a card's changes running.
+# See internal/review/README.md.
 #
-# RAILS_ENV is set to production, so BACKEND_URL and FRONTEND_URL must be
-# non-localhost values (the CRM refuses to boot in production with localhost).
-# On Mac/Windows: host.docker.internal works out of the box.
-# On Linux: use the host LAN IP or add extra_hosts mapping.
+# The image tag of each service is overridable via env:
+#   - no override      → every service runs :develop (the review baseline)
+#   - <SVC>_TAG=pr-<N> → pins that service to its PR image (:pr-N)
+#   tag vars: CRM_TAG, AUTH_TAG, CORE_TAG, PROCESSOR_TAG, BOT_TAG, FRONTEND_TAG
 #
-# Usage:
+# RAILS_ENV=production, so BACKEND_URL and FRONTEND_URL must be non-localhost
+# (the CRM refuses to boot in production with localhost). On Mac/Windows,
+# host.docker.internal works; on Linux use the host LAN IP or extra_hosts.
+#
+# Example — review CRM PR #140 against the rest of develop:
+#   CRM_TAG=pr-140 \
 #   BACKEND_URL=http://host.docker.internal:3030 \
 #   FRONTEND_URL=http://host.docker.internal:5173 \
-#     docker compose -f docker-compose.prod-test.yaml up -d
-#   docker compose -f docker-compose.prod-test.yaml logs -f
-#   docker compose -f docker-compose.prod-test.yaml down -v
+#     docker compose -f internal/review/docker-compose.yml up -d
+#   docker compose -f internal/review/docker-compose.yml down -v
 # =============================================================================
 
 services:
@@ -57,7 +62,7 @@ services:
   # ---------------------------------------------------------------------------
   evo_gateway:
     build:
-      context: ./nginx
+      context: ../../nginx
       dockerfile: Dockerfile
     ports:
       - "3030:3030"
@@ -71,7 +76,7 @@ services:
   # Auth Service (Ruby / Rails) — Port 3001
   # ---------------------------------------------------------------------------
   evo_auth:
-    image: evoapicloud/evo-auth-service-community:latest
+    image: evoapicloud/evo-auth-service-community:${AUTH_TAG:-develop}
     command: sh -c "bundle exec rails db:prepare && bundle exec rails s -p 3001 -b 0.0.0.0"
     ports:
       - "3001:3001"
@@ -87,7 +92,7 @@ services:
       POSTGRES_PASSWORD: evoai_dev_password
       POSTGRES_DATABASE: evo_community
       REDIS_URL: redis://:evoai_redis_pass@evo_redis:6379/1
-      FRONTEND_URL: "${FRONTEND_URL:?FRONTEND_URL must be set to a non-localhost URL for prod-test (e.g. http://host.docker.internal:5173)}"
+      FRONTEND_URL: "${FRONTEND_URL:?FRONTEND_URL must be set to a non-localhost URL for the review env (e.g. http://host.docker.internal:5173)}"
       MAILER_SENDER_EMAIL: noreply@evoai.local
       DOORKEEPER_JWT_SECRET_KEY: "a]i9F#k2$$Lm7Nq0R!sT4uW6xZ8bD1eG3hJ5oP7rV9yAcE2fH4jM6pS8vX0zB3dK5nQ7tU9wY1"
       DOORKEEPER_JWT_ALGORITHM: hs256
@@ -108,7 +113,7 @@ services:
       start_period: 90s
 
   evo_auth_sidekiq:
-    image: evoapicloud/evo-auth-service-community:latest
+    image: evoapicloud/evo-auth-service-community:${AUTH_TAG:-develop}
     command: sh -c "bundle exec sidekiq"
     # Disable inherited HTTP healthcheck — Sidekiq has no web server.
     healthcheck:
@@ -135,7 +140,7 @@ services:
   # CRM Service (Ruby / Rails) — Port 3000
   # ---------------------------------------------------------------------------
   evo_crm:
-    image: evoapicloud/evo-ai-crm-community:latest
+    image: evoapicloud/evo-ai-crm-community:${CRM_TAG:-develop}
     command: sh -c "bundle exec rails db:prepare && bundle exec rails s -p 3000 -b 0.0.0.0"
     ports:
       - "3000:3000"
@@ -154,8 +159,8 @@ services:
       REDIS_URL: redis://:evoai_redis_pass@evo_redis:6379/0
       EVO_AUTH_SERVICE_URL: http://evo_auth:3001
       EVO_AI_CORE_SERVICE_URL: http://evo_core:5555
-      BACKEND_URL: "${BACKEND_URL:?BACKEND_URL must be set to a non-localhost URL for prod-test (e.g. http://host.docker.internal:3030)}"
-      FRONTEND_URL: "${FRONTEND_URL:?FRONTEND_URL must be set to a non-localhost URL for prod-test (e.g. http://host.docker.internal:5173)}"
+      BACKEND_URL: "${BACKEND_URL:?BACKEND_URL must be set to a non-localhost URL for the review env (e.g. http://host.docker.internal:3030)}"
+      FRONTEND_URL: "${FRONTEND_URL:?FRONTEND_URL must be set to a non-localhost URL for the review env (e.g. http://host.docker.internal:5173)}"
       # CORS origins are the browser's Origin header (Vite serves on localhost:5173 from the host machine);
       # they are independent of BACKEND_URL/FRONTEND_URL which are CRM-side URLs.
       CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:5173,http://localhost:3030}"
@@ -182,7 +187,7 @@ services:
       start_period: 120s
 
   evo_crm_sidekiq:
-    image: evoapicloud/evo-ai-crm-community:latest
+    image: evoapicloud/evo-ai-crm-community:${CRM_TAG:-develop}
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
     # Disable inherited HTTP healthcheck — Sidekiq has no web server.
     healthcheck:
@@ -213,7 +218,7 @@ services:
   # Core Service (Go / Gin) — Port 5555
   # ---------------------------------------------------------------------------
   evo_core:
-    image: evoapicloud/evo-ai-core-service-community:latest
+    image: evoapicloud/evo-ai-core-service-community:${CORE_TAG:-develop}
     ports:
       - "5555:5555"
     environment:
@@ -244,7 +249,7 @@ services:
   # Processor Service (Python / FastAPI) — Port 8000
   # ---------------------------------------------------------------------------
   evo_processor:
-    image: evoapicloud/evo-ai-processor-community:latest
+    image: evoapicloud/evo-ai-processor-community:${PROCESSOR_TAG:-develop}
     ports:
       - "8000:8000"
     environment:
@@ -285,7 +290,7 @@ services:
   # Bot Runtime (Go / Gin) — Port 8080
   # ---------------------------------------------------------------------------
   evo_bot_runtime:
-    image: evoapicloud/evo-bot-runtime:latest
+    image: evoapicloud/evo-bot-runtime:${BOT_TAG:-develop}
     ports:
       - "8080:8080"
     environment:
@@ -302,7 +307,7 @@ services:
   # Frontend (React / Vite / Nginx) — Port 5173
   # ---------------------------------------------------------------------------
   evo_frontend:
-    image: evoapicloud/evo-ai-frontend-community:latest
+    image: evoapicloud/evo-ai-frontend-community:${FRONTEND_TAG:-develop}
     ports:
       - "5173:80"
     environment:

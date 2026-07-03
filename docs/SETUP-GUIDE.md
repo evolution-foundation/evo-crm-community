@@ -15,10 +15,6 @@ There are exactly **two** supported ways to run the stack:
 > Redis, RabbitMQ, ClickHouse and on service-to-service URLs that are wired by
 > the compose/stack files. Running a single service with `docker run` will not
 > bring up a usable environment. Use one of the two methods above.
->
-> A third file, `docker-compose.prod-test.yaml`, exists only to *simulate* the
-> production stack locally (production images + nginx gateway). It is a testing
-> aid, not a deployment target — see the file header for required env vars.
 
 ## Prerequisites
 
@@ -87,7 +83,7 @@ replaces `VITE_*_PLACEHOLDER` tokens), so changing one only needs
 
 In development, `evo-core` pulls the public image
 `evoapicloud/evo-ai-core-service-community:latest` from Docker Hub — the same
-image used by `prod-test` and `swarm`. No local Go build is required.
+image used by `swarm`. No local Go build is required.
 
 To develop the Core locally instead, swap the `image:` line for a `build:`
 against `./evo-ai-core-service-community` (a separate community Go module file —

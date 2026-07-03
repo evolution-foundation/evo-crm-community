@@ -23,8 +23,9 @@ Full path matrix is in [`default.conf.template`](./default.conf.template).
 
 Each of the five variables above is rendered at container start from an
 environment variable. The defaults below (`evo_auth`, `evo_crm`, …) match the
-underscore service names used by **`docker-compose.prod-test.yaml`**, which is
-the only stack that runs this gateway against the default hostnames.
+underscore service names used by **`internal/review/docker-compose.yml`** (the
+review environment), which is the only stack that runs this gateway against the
+default hostnames.
 
 Two stacks do **not** match these defaults:
 

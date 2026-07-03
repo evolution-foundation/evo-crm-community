@@ -195,7 +195,7 @@ services:
   # Core Service (Go / Gin) — Port 5555
   # ---------------------------------------------------------------------------
   evo-core:
-    # Pulled from Docker Hub — same public image used by prod-test and swarm.
+    # Pulled from Docker Hub — same public image used by swarm.
     # (To develop the Core locally, swap this for a `build:` against
     # ./evo-ai-core-service-community using a community modfile.)
     image: evoapicloud/evo-ai-core-service-community:latest
