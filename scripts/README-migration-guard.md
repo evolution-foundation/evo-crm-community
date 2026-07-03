@@ -16,9 +16,20 @@ From the umbrella root:
 
 Exit codes: `0` no collision · `1` collision found · `2` unexpected repo state.
 
+### Reproducing CI behavior locally
+
+CI (`actions/checkout@v4` with `submodules: recursive`) reads the submodule SHAs **pinned in the umbrella tree**, not the tip of each submodule branch. If your working tree has newer submodule commits than what the umbrella records, the script will disagree with CI. To reproduce CI exactly:
+
+```sh
+git submodule update --init --recursive   # forces checkout of the pinned SHAs
+./scripts/check_migration_collision.sh
+```
+
+If this diverges from a run against your working tree, someone has an un-bumped submodule pointer somewhere and CI will be the source of truth.
+
 ## How to fix when it flags
 
-Renumber the offending migration in the repo with **fewer** migrations (auth, today) by adding 1 second to the timestamp:
+Renumber the migration on the side that has **not** been applied to any live deployment yet (typically the branch that has only touched `develop`, never a prod/staging DB). Bumping the timestamp by 1 second is enough:
 
 ```sh
 cd evo-auth-service-community

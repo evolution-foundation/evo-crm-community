@@ -28,6 +28,6 @@ if [[ -n "$collisions" ]]; then
   exit 1
 fi
 
-crm_count=$(echo "$crm_versions" | wc -l)
-auth_count=$(echo "$auth_versions" | wc -l)
+crm_count=$([[ -z "$crm_versions" ]] && echo 0 || echo "$crm_versions" | wc -l)
+auth_count=$([[ -z "$auth_versions" ]] && echo 0 || echo "$auth_versions" | wc -l)
 echo "No migration version collisions between CRM (${crm_count} versions) and auth (${auth_count} versions)."
