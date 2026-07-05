@@ -3,10 +3,18 @@
 	url = https://github.com/evolution-foundation/evo-auth-service-community.git
 [submodule "evo-ai-crm-community"]
 	path = evo-ai-crm-community
-	url = https://github.com/evolution-foundation/evo-ai-crm-community.git
+	# TEMPORARY: pointing at the personal fork while the "Evo CRM -> EAP CRM"
+	# rebrand PR (branch rebrand-eap-crm) is pending review/merge upstream.
+	# Revert to https://github.com/evolution-foundation/evo-ai-crm-community.git
+	# once the upstream PR is merged.
+	url = https://github.com/thiagombenev/evo-ai-crm-community.git
 [submodule "evo-ai-frontend-community"]
 	path = evo-ai-frontend-community
-	url = https://github.com/evolution-foundation/evo-ai-frontend-community.git
+	# TEMPORARY: pointing at the personal fork while the "Evo CRM -> EAP CRM"
+	# rebrand PR (branch rebrand-eap-crm) is pending review/merge upstream.
+	# Revert to https://github.com/evolution-foundation/evo-ai-frontend-community.git
+	# once the upstream PR is merged.
+	url = https://github.com/thiagombenev/evo-ai-frontend-community.git
 [submodule "evo-ai-processor-community"]
 	path = evo-ai-processor-community
 	url = https://github.com/evolution-foundation/evo-ai-processor-community.git
