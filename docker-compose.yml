@@ -71,6 +71,9 @@ services:
       RAILS_ENV: ${RAILS_ENV:-development}
       REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/1
       POSTGRES_HOST: postgres
+      # EVO-1999: this service's command already runs db:create && db:migrate, and
+      # the image migrates on boot (entrypoint). RUN_MIGRATIONS=false avoids doubling.
+      RUN_MIGRATIONS: "false"
     volumes:
       - ./evo-auth-service-community/storage:/rails/storage
     depends_on:
@@ -96,6 +99,8 @@ services:
       RAILS_ENV: ${RAILS_ENV:-development}
       REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/1
       POSTGRES_HOST: postgres
+      # EVO-1999: sidekiq must not run migrations (the web service already covers it).
+      RUN_MIGRATIONS: "false"
     depends_on:
       postgres:
         condition: service_healthy
@@ -173,6 +178,8 @@ services:
       BOT_RUNTIME_URL: http://evo-bot-runtime:8080
       BOT_RUNTIME_SECRET: ${BOT_RUNTIME_SECRET:-evo-bot-runtime-dev-secret}
       BOT_RUNTIME_POSTBACK_BASE_URL: http://evo-crm:3000
+      # EVO-1999: sidekiq must not prepare the database (the web covers it via db:prepare).
+      RUN_MIGRATIONS: "false"
     volumes:
       - ./evo-ai-crm-community:/app:delegated
       - crm_bundle:/usr/local/bundle
@@ -188,7 +195,8 @@ services:
     # Disable inherited HTTP healthcheck — Sidekiq has no web server.
     healthcheck:
       disable: true
-    entrypoint: docker/entrypoints/rails.sh
+    # LOW (review): no explicit entrypoint — the image ENTRYPOINT is already
+    # docker/entrypoints/rails.sh (EVO-1999); RUN_MIGRATIONS=false skips db:prepare.
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
 
   # ---------------------------------------------------------------------------
