@@ -29,7 +29,9 @@ for d in "$CRM_DIR" "$AUTH_DIR"; do
 done
 
 # Extrai a version (14 dígitos iniciais) de cada arquivo de migration, únicas e ordenadas.
-versions() { ls "$1" 2>/dev/null | grep -oE '^[0-9]{14}' | sort -u; }
+# `|| true`: grep sai 1 quando o dir não tem nenhum arquivo de 14 dígitos, o que sob
+# `pipefail` abortaria a atribuição `crm_versions="$(...)"` com falha espúria.
+versions() { ls "$1" 2>/dev/null | grep -oE '^[0-9]{14}' | sort -u || true; }
 
 crm_versions="$(versions "$CRM_DIR")"
 auth_versions="$(versions "$AUTH_DIR")"
