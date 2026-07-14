@@ -56,3 +56,14 @@ jobs:
         with:
           dockerfile: evo-ai-core-service-community/Dockerfile
           failure-threshold: error
+
+  check-migration-collision:
+    name: Check Migration Version Collision (CRM vs auth)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Run migration collision guard
+        run: ./scripts/check_migration_collision.sh

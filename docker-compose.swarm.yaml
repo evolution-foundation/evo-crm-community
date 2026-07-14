@@ -34,7 +34,6 @@
 ## As imagens são puxadas do Docker Hub (evoapicloud/*).
 ## ============================================================================
 
-version: "3.7"
 services:
 
 ## --------------------------- ORION --------------------------- ##
@@ -121,16 +120,21 @@ services:
       - MFA_ISSUER=EvoCRM
       - SIDEKIQ_CONCURRENCY=10
 
-    ## 🗂️ Storage (S3 compatível) — opcional, preencha se for usar storage externo
-      - ACTIVE_STORAGE_SERVICE=s3_compatible
-      - STORAGE_BUCKET_NAME=evoaicrm   # Nome do seu bucket
-      - STORAGE_ACCESS_KEY_ID=         # Access key do seu S3
-      - STORAGE_SECRET_ACCESS_KEY=     # Secret key do seu S3
-      - STORAGE_REGION=auto
-      - STORAGE_ENDPOINT=https://      # Endpoint do seu S3. Ex.: https://xxxx.r2.cloudflarestorage.com
+    ## 🗂️ Storage — 'local' por padrão: mídia gravada em disco (volumes evocrm_storage / evoauth_storage).
+    ## Para usar S3/R2/MinIO externo, troque para s3_compatible e descomente/preencha as STORAGE_* abaixo.
+      - ACTIVE_STORAGE_SERVICE=local
+      - ACTIVE_STORAGE_URL=https://SUBDOMAIN_API   # URL publica p/ midia local (browser) = BACKEND_URL; gateway roteia /rails/active_storage -> CRM
+      # - ACTIVE_STORAGE_SERVICE=s3_compatible
+      # - STORAGE_BUCKET_NAME=meu-bucket
+      # - STORAGE_ACCESS_KEY_ID=
+      # - STORAGE_SECRET_ACCESS_KEY=
+      # - STORAGE_REGION=auto
+      # - STORAGE_ENDPOINT=https://xxxx.r2.cloudflarestorage.com
 
       - OAUTH_TOKEN_EXPIRES_IN=28800
 
+    volumes:
+      - evoauth_storage:/app/storage
     deploy:
       placement:
         constraints:
@@ -189,19 +193,24 @@ services:
       - MFA_ISSUER=EvoCRM
       - SIDEKIQ_CONCURRENCY=10
 
-    ## 🗂️ Storage (S3 compatível) — opcional, preencha se for usar storage externo
-      - ACTIVE_STORAGE_SERVICE=s3_compatible
-      - STORAGE_BUCKET_NAME=evoaicrm   # Nome do seu bucket
-      - STORAGE_ACCESS_KEY_ID=         # Access key do seu S3
-      - STORAGE_SECRET_ACCESS_KEY=     # Secret key do seu S3
-      - STORAGE_REGION=auto
-      - STORAGE_ENDPOINT=https://      # Endpoint do seu S3
+    ## 🗂️ Storage — 'local' por padrão: mídia gravada em disco (volumes evocrm_storage / evoauth_storage).
+    ## Para usar S3/R2/MinIO externo, troque para s3_compatible e descomente/preencha as STORAGE_* abaixo.
+      - ACTIVE_STORAGE_SERVICE=local
+      - ACTIVE_STORAGE_URL=https://SUBDOMAIN_API   # URL publica p/ midia local (browser) = BACKEND_URL; gateway roteia /rails/active_storage -> CRM
+      # - ACTIVE_STORAGE_SERVICE=s3_compatible
+      # - STORAGE_BUCKET_NAME=meu-bucket
+      # - STORAGE_ACCESS_KEY_ID=
+      # - STORAGE_SECRET_ACCESS_KEY=
+      # - STORAGE_REGION=auto
+      # - STORAGE_ENDPOINT=https://xxxx.r2.cloudflarestorage.com
 
       - OAUTH_TOKEN_EXPIRES_IN=28800
 
     healthcheck:
       disable: true
 
+    volumes:
+      - evoauth_storage:/app/storage
     deploy:
       placement:
         constraints:
@@ -261,14 +270,19 @@ services:
       - BOT_RUNTIME_SECRET=     # Segredo do bot runtime (o mesmo em crm, crm_sidekiq e bot_runtime). Ex.: "openssl rand -hex 32"
       - BOT_RUNTIME_POSTBACK_BASE_URL=http://evocrm_crm:3000
 
-    ## 🗂️ Storage (S3 compatível) — opcional, preencha se for usar storage externo
-      - ACTIVE_STORAGE_SERVICE=s3_compatible
-      - STORAGE_BUCKET_NAME=evoaicrm   # Nome do seu bucket
-      - STORAGE_ACCESS_KEY_ID=         # Access key do seu S3
-      - STORAGE_SECRET_ACCESS_KEY=     # Secret key do seu S3
-      - STORAGE_REGION=auto
-      - STORAGE_ENDPOINT=https://      # Endpoint do seu S3
+    ## 🗂️ Storage — 'local' por padrão: mídia gravada em disco (volumes evocrm_storage / evoauth_storage).
+    ## Para usar S3/R2/MinIO externo, troque para s3_compatible e descomente/preencha as STORAGE_* abaixo.
+      - ACTIVE_STORAGE_SERVICE=local
+      - ACTIVE_STORAGE_URL=https://SUBDOMAIN_API   # URL publica p/ midia local (browser) = BACKEND_URL; gateway roteia /rails/active_storage -> CRM
+      # - ACTIVE_STORAGE_SERVICE=s3_compatible
+      # - STORAGE_BUCKET_NAME=meu-bucket
+      # - STORAGE_ACCESS_KEY_ID=
+      # - STORAGE_SECRET_ACCESS_KEY=
+      # - STORAGE_REGION=auto
+      # - STORAGE_ENDPOINT=https://xxxx.r2.cloudflarestorage.com
 
+    volumes:
+      - evocrm_storage:/app/storage
     deploy:
       placement:
         constraints:
@@ -317,14 +331,19 @@ services:
       - BOT_RUNTIME_SECRET=     # Mesmo valor de BOT_RUNTIME_SECRET usado no evocrm_crm e bot_runtime
       - BOT_RUNTIME_POSTBACK_BASE_URL=http://evocrm_crm:3000
 
-    ## 🗂️ Storage (S3 compatível) — opcional, preencha se for usar storage externo
-      - ACTIVE_STORAGE_SERVICE=s3_compatible
-      - STORAGE_BUCKET_NAME=evoaicrm   # Nome do seu bucket
-      - STORAGE_ACCESS_KEY_ID=         # Access key do seu S3
-      - STORAGE_SECRET_ACCESS_KEY=     # Secret key do seu S3
-      - STORAGE_REGION=auto
-      - STORAGE_ENDPOINT=https://      # Endpoint do seu S3
+    ## 🗂️ Storage — 'local' por padrão: mídia gravada em disco (volumes evocrm_storage / evoauth_storage).
+    ## Para usar S3/R2/MinIO externo, troque para s3_compatible e descomente/preencha as STORAGE_* abaixo.
+      - ACTIVE_STORAGE_SERVICE=local
+      - ACTIVE_STORAGE_URL=https://SUBDOMAIN_API   # URL publica p/ midia local (browser) = BACKEND_URL; gateway roteia /rails/active_storage -> CRM
+      # - ACTIVE_STORAGE_SERVICE=s3_compatible
+      # - STORAGE_BUCKET_NAME=meu-bucket
+      # - STORAGE_ACCESS_KEY_ID=
+      # - STORAGE_SECRET_ACCESS_KEY=
+      # - STORAGE_REGION=auto
+      # - STORAGE_ENDPOINT=https://xxxx.r2.cloudflarestorage.com
 
+    volumes:
+      - evocrm_storage:/app/storage
     deploy:
       placement:
         constraints:
@@ -386,8 +405,9 @@ services:
       - evonet ## Nome da rede interna
 
     environment:
-    ## 🗄️ PostgreSQL — troque SENHA pela mesma senha do Postgres usada nos demais serviços
-      - POSTGRES_CONNECTION_STRING=postgresql://postgres:SENHA@pgvector:5432/evocrm?sslmode=disable
+    ## 🗄️ PostgreSQL — a senha está DENTRO da URL. Substitua <POSTGRES_PASSWORD> pela
+    ## mesma senha do Postgres usada nos demais serviços (o app lê só esta connection string).
+      - POSTGRES_CONNECTION_STRING=postgresql://postgres:<POSTGRES_PASSWORD>@pgvector:5432/evocrm?sslmode=disable
 
     ## 🧊 Redis
       - REDIS_HOST=evocrm_redis
@@ -525,6 +545,8 @@ volumes:
   evocrm_redis:
     external: true
     name: evocrm_redis
+  evocrm_storage:
+  evoauth_storage:
 
 networks:
   evonet: ## Nome da rede interna

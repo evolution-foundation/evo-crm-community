@@ -34,6 +34,9 @@ jobs:
           - service: evo-ai-core-service-community
             context: ./evo-ai-core-service-community
             dockerfile: ./evo-ai-core-service-community/Dockerfile
+          - service: evo-flow-community
+            context: ./evo-flow-community
+            dockerfile: ./evo-flow-community/Dockerfile
 
     steps:
       - uses: actions/checkout@v4
@@ -96,6 +99,7 @@ jobs:
             docker pull evoapicloud/evo-ai-frontend-community:${{ steps.dockertag.outputs.version }}
             docker pull evoapicloud/evo-ai-processor-community:${{ steps.dockertag.outputs.version }}
             docker pull evoapicloud/evo-ai-core-service-community:${{ steps.dockertag.outputs.version }}
+            docker pull evoapicloud/evo-flow-community:${{ steps.dockertag.outputs.version }}
             docker pull evoapicloud/evo-bot-runtime:${{ steps.dockertag.outputs.version }}
             docker pull evoapicloud/evo-crm-gateway:${{ steps.dockertag.outputs.version }}
             ```
