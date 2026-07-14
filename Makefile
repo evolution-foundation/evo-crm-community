@@ -52,12 +52,12 @@ setup: ## First-time setup: copy env, build, start, seed
 	@echo "$(GREEN)============================================$(RESET)"
 	@echo ""
 	@echo "  Frontend:      http://localhost:5173"
-	@echo "  CRM API:      http://localhost:3000"
-	@echo "  Auth API:     http://localhost:3001"
-	@echo "  Processor:    http://localhost:8000"
-	@echo "  Core API:     http://localhost:5555"
-	@echo "  Bot Runtime:  http://localhost:8080"
-	@echo "  Mailhog:      http://localhost:8025"
+	@echo "  CRM API:      http://localhost:3010"
+	@echo "  Auth API:     http://localhost:3011"
+	@echo "  Processor:    http://localhost:8011"
+	@echo "  Core API:     http://localhost:5565"
+	@echo "  Bot Runtime:  http://localhost:8092"
+	@echo "  Mailhog:      http://localhost:18025"
 	@echo ""
 	@echo "  First access: http://localhost:5173/setup"
 	@echo "  Create your admin user via the setup wizard."
@@ -107,7 +107,7 @@ seed-crm: ## Create DB + load CRM master schema + mark auth migrations + seed CR
 	docker compose run --rm evo-crm bundle exec rails db:seed
 	@echo "$(GREEN)CRM schema loaded and seeded.$(RESET)"
 
-seed-auth: ## Seed the Auth service (creates default user)
+seed-auth: ## Seed the Auth service (config only — no user; create yours at /setup)
 	@echo "$(CYAN)Seeding Auth service...$(RESET)"
 	docker compose run --rm evo-auth bundle exec rails db:seed
 	@echo "$(GREEN)Auth service seeded.$(RESET)"

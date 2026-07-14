@@ -106,6 +106,7 @@ SUBMODULE_DIRS=(
   "evo-ai-processor-community"
   "evo-ai-core-service-community"
   "evo-bot-runtime"
+  "evo-flow-community"
 )
 
 needs_init=false
@@ -194,25 +195,33 @@ success "Redis is ready"
 echo ""
 
 # ---------------------------------------------------------------------------
-# Step 6: Seed Auth service (must be first)
+# Step 6: Seed the database (canonical flow — mirrors `make seed`)
 # ---------------------------------------------------------------------------
-info "Seeding Auth service (creating default account and user)..."
-docker compose run --rm evo-auth sh -c "bundle exec rails db:create && bundle exec rails db:migrate && bundle exec rails db:seed"
+# The CRM owns the master schema. Load it first, then mark the auth service's
+# migrations as already applied (the schema:load already created their tables),
+# then run the application seeds. This is the same sequence the Makefile uses;
+# keep them in sync.
+info "Loading CRM master schema..."
+docker compose run --rm evo-crm bundle exec rails db:create db:schema:load
+success "CRM schema loaded"
+
+info "Marking auth migrations as applied..."
+docker compose run --rm evo-auth bundle exec rails runner \
+  "Dir['db/migrate/*.rb'].sort.map { |f| File.basename(f).split('_').first }.each { |v| begin; ActiveRecord::Base.connection.schema_migration.create_version(v); rescue ActiveRecord::RecordNotUnique; end }"
+success "Auth migrations marked"
+
+info "Seeding CRM service..."
+docker compose run --rm evo-crm bundle exec rails db:seed
+success "CRM service seeded"
+
+info "Seeding Auth service..."
+docker compose run --rm evo-auth bundle exec rails db:seed
 success "Auth service seeded"
 
 echo ""
 
 # ---------------------------------------------------------------------------
-# Step 7: Seed CRM service
-# ---------------------------------------------------------------------------
-info "Seeding CRM service (creating default inbox)..."
-docker compose run --rm evo-crm sh -c "bundle exec rails db:prepare && bundle exec rails db:seed"
-success "CRM service seeded"
-
-echo ""
-
-# ---------------------------------------------------------------------------
-# Step 8: Start all services
+# Step 7: Start all services
 # ---------------------------------------------------------------------------
 info "Starting all services..."
 docker compose up -d
@@ -231,17 +240,17 @@ echo ""
 echo "  ${BOLD}Service URLs:${RESET}"
 echo "  ─────────────────────────────────────────────"
 echo "  Frontend:      ${CYAN}http://localhost:5173${RESET}"
-echo "  CRM API:      ${CYAN}http://localhost:3000${RESET}"
-echo "  Auth API:     ${CYAN}http://localhost:3001${RESET}"
-echo "  Processor:    ${CYAN}http://localhost:8000${RESET}"
-echo "  Core API:     ${CYAN}http://localhost:5555${RESET}"
-echo "  Bot Runtime:  ${CYAN}http://localhost:8080${RESET}"
-echo "  Mailhog:      ${CYAN}http://localhost:8025${RESET}  (email testing)"
+echo "  CRM API:      ${CYAN}http://localhost:3010${RESET}"
+echo "  Auth API:     ${CYAN}http://localhost:3011${RESET}"
+echo "  Processor:    ${CYAN}http://localhost:8011${RESET}"
+echo "  Core API:     ${CYAN}http://localhost:5565${RESET}"
+echo "  Bot Runtime:  ${CYAN}http://localhost:8092${RESET}"
+echo "  Mailhog:      ${CYAN}http://localhost:18025${RESET}  (email testing)"
 echo ""
-echo "  ${BOLD}Default Login:${RESET}"
+echo "  ${BOLD}First Access:${RESET}"
 echo "  ─────────────────────────────────────────────"
-echo "  Email:       ${GREEN}support@evo-auth-service-community.com${RESET}"
-echo "  Password:    ${GREEN}Password@123${RESET}"
+echo "  Open ${GREEN}http://localhost:5173/setup${RESET} and create your admin"
+echo "  user through the setup wizard (no default login is pre-seeded)."
 echo ""
 echo "  ${BOLD}Useful Commands:${RESET}"
 echo "  ─────────────────────────────────────────────"

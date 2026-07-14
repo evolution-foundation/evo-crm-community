@@ -26,6 +26,6 @@
 [submodule "evo-nexus"]
 	path = evo-nexus
 	url = https://github.com/evolution-foundation/evo-nexus.git
-# [submodule "evo-flow"]
-# 	path = evo-flow
-# 	url = https://github.com/evolution-foundation/evo-flow.git
+[submodule "evo-flow-community"]
+	path = evo-flow-community
+	url = https://github.com/evolution-foundation/evo-flow-community.git
