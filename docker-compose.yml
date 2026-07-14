@@ -416,8 +416,6 @@ services:
       evo-crm:
         condition: service_healthy
     healthcheck:
-      # nginx listens on IPv4 only (`listen 80;`); localhost resolves to ::1
-      # inside the container → use 127.0.0.1 so the probe hits IPv4.
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:80/health"]
       interval: 15s
       timeout: 5s
