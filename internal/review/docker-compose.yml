@@ -299,6 +299,9 @@ services:
       AI_PROCESSOR_URL: http://evo_processor:8000
       BOT_RUNTIME_SECRET: evo-bot-runtime-dev-secret
       AI_CALL_TIMEOUT_SECONDS: 30
+      # Hosts allowed to serve incoming media; without this no attachment is
+      # fetched. Covers both the host BACKEND_URL uses and the compose alias.
+      MEDIA_HOST_ALLOWLIST: localhost,evo_crm
     depends_on:
       evo_redis:
         condition: service_healthy

@@ -488,6 +488,9 @@ services:
       - AI_PROCESSOR_URL=http://evocrm_processor:8000
       - BOT_RUNTIME_SECRET=     # Mesmo valor de BOT_RUNTIME_SECRET usado no evocrm_crm e evocrm_crm_sidekiq
       - AI_CALL_TIMEOUT_SECONDS=30
+      - MEDIA_HOST_ALLOWLIST=   # Host(s) que servem a midia recebida, separados por virgula, sem esquema nem porta.
+                                # Use o host do BACKEND_URL do CRM (o que assina a URL do anexo); sem isso o agente nao recebe midia.
+                                # Ex.: "crm.seudominio.com".
 
     deploy:
       placement:
