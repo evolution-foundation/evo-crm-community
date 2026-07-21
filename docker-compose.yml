@@ -288,6 +288,10 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379
       AI_PROCESSOR_URL: http://evo-processor:8000
       BOT_RUNTIME_SECRET: ${BOT_RUNTIME_SECRET:-evo-bot-runtime-dev-secret}
+      # Hosts allowed to serve incoming media. Must cover the host the CRM signs
+      # attachment URLs with (ACTIVE_STORAGE_URL, or BACKEND_URL when unset), or
+      # the agent receives no media at all.
+      MEDIA_HOST_ALLOWLIST: ${MEDIA_HOST_ALLOWLIST:-localhost}
     depends_on:
       redis:
         condition: service_healthy
