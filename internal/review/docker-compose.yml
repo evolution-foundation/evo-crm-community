@@ -302,7 +302,11 @@ services:
       REDIS_URL: redis://:evoai_redis_pass@evo_redis:6379
       AI_PROCESSOR_URL: http://evo_processor:8000
       BOT_RUNTIME_SECRET: evo-bot-runtime-dev-secret
-      AI_CALL_TIMEOUT_SECONDS: 30
+      # CRM-236: 30s was dimensioned for a single well-behaved model call, but a
+      # tool-calling turn makes at least two round trips and gemini-2.5-flash's
+      # tail measured 20.4s on a trivial prompt. Pinning 30 here silently
+      # overrode the code default and reproduced the original incident.
+      AI_CALL_TIMEOUT_SECONDS: 90
       # Hosts allowed to serve incoming media; without this no attachment is
       # fetched. Covers both the host BACKEND_URL uses and the compose alias.
       MEDIA_HOST_ALLOWLIST: localhost,evo_crm
