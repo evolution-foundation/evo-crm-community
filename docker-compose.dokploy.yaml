@@ -67,7 +67,7 @@ services:
   # One-shot initialization jobs (run once per deployment)
   # ---------------------------------------------------------------------------
   evo_auth_init:
-    image: evoapicloud/evo-auth-service-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
     restart: "no"
 
     environment:
@@ -101,7 +101,7 @@ services:
     command: sh -c "(bundle exec rails db:prepare || echo 'Auth db:prepare non-fatal error') && (bundle exec rails db:seed || echo 'Auth seed skipped (already applied or non-fatal error)')"
 
   evo_crm_init:
-    image: evoapicloud/evo-ai-crm-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
     restart: "no"
 
     environment:
@@ -147,7 +147,7 @@ services:
         exit 0
 
   evo_processor_init:
-    image: evoapicloud/evo-ai-processor-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-processor-community:latest
     restart: "no"
 
     environment:
@@ -207,7 +207,7 @@ services:
   # API Gateway
   # ---------------------------------------------------------------------------
   evo-gateway:
-    image: evoapicloud/evo-crm-gateway:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-crm-gateway:latest
     restart: unless-stopped
     environment:
       BACKEND_URL: ${BACKEND_URL}
@@ -231,7 +231,7 @@ services:
   # Auth
   # ---------------------------------------------------------------------------
   evo-auth:
-    image: evoapicloud/evo-auth-service-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
     restart: unless-stopped
 
     environment:
@@ -283,7 +283,7 @@ services:
       start_period: 180s
 
   evo-auth-sidekiq:
-    image: evoapicloud/evo-auth-service-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
     restart: unless-stopped
 
     environment:
@@ -325,7 +325,7 @@ services:
   # CRM
   # ---------------------------------------------------------------------------
   evo-crm:
-    image: evoapicloud/evo-ai-crm-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
     restart: unless-stopped
 
     environment:
@@ -390,7 +390,7 @@ services:
       start_period: 90s
 
   evo-crm-sidekiq:
-    image: evoapicloud/evo-ai-crm-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
     restart: unless-stopped
 
     environment:
@@ -463,7 +463,7 @@ services:
         echo "evo_core_db_init complete"
 
   evo-core:
-    image: evoapicloud/evo-ai-core-service-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-core-service-community:latest
     restart: unless-stopped
 
     environment:
@@ -509,7 +509,7 @@ services:
   # Processor
   # ---------------------------------------------------------------------------
   evo-processor:
-    image: evoapicloud/evo-ai-processor-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-processor-community:latest
     restart: unless-stopped
 
     environment:
@@ -596,7 +596,7 @@ services:
   # straight to ClickHouse.
   # ---------------------------------------------------------------------------
   evo-flow:
-    image: evoapicloud/evo-flow-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-flow-community:latest
     restart: unless-stopped
 
     environment:
@@ -660,7 +660,7 @@ services:
   # Frontend
   # ---------------------------------------------------------------------------
   evo-frontend:
-    image: evoapicloud/evo-ai-frontend-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-frontend-community:latest
     restart: unless-stopped
 
     environment:
