@@ -3,37 +3,32 @@ name: "Build & Publish Gateway Image"
 on:
   push:
     branches: [main, develop]
-    tags: ["v*.*.*"]
     paths:
       - "nginx/**"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  IMAGE_NAME: evoapicloud/evo-crm-gateway
+  REGISTRY: registry.bellosoft.dev
+  IMAGE_NAME: registry.bellosoft.dev/evolution-foundation/evo-crm-gateway
 
 jobs:
   build:
-    name: Build ${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: linux/amd64
-            runner: ubuntu-latest
-          - platform: linux/arm64
-            runner: ubuntu-24.04-arm
+    name: Build amd64
+    runs-on: [self-hosted, X64, Linux, bellosoft]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
 
-      - uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+      - name: Login to ZOD Registry
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: admin
+          password: ${{ secrets.ZOT_PASSWORD }}
 
       - name: Build and push by digest
         id: build
@@ -41,13 +36,13 @@ jobs:
         with:
           context: ./nginx
           file: ./nginx/Dockerfile
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64
           push: true
           provenance: mode=max
           sbom: true
           outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true
-          cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,scope=${{ matrix.platform }},mode=max
+          cache-from: type=gha,scope=linux/amd64
+          cache-to: type=gha,scope=linux/amd64,mode=max
 
       - name: Export digest
         run: |
@@ -57,14 +52,14 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: digest-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
+          name: digest-amd64
           path: /tmp/digests/*
           retention-days: 1
 
   merge:
     name: Merge Manifests & Tag
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, bellosoft]
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
@@ -74,25 +69,36 @@ jobs:
 
       - uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
 
-      - uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+      - name: Login to ZOD Registry
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.REGISTRY }}
+          username: admin
+          password: ${{ secrets.ZOT_PASSWORD }}
+
+      - name: Generate version tags
+        id: version
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          BUILD_DATE=$(date -u +%Y-%m-%d)
+          BUILD_VERSION="${BUILD_DATE}-${{ github.run_number }}"
+          echo "date=${BUILD_DATE}" >> $GITHUB_OUTPUT
+          echo "version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated version: ${BUILD_VERSION}"
 
       - name: Resolve tags
         id: tags
         env:
           GH_REF: ${{ github.ref }}
-          GH_REF_NAME: ${{ github.ref_name }}
           GH_SHA: ${{ github.sha }}
+          DISPATCH_VERSION: ${{ steps.version.outputs.version }}
         run: |
           IMAGE="${{ env.IMAGE_NAME }}"
           SHA_SHORT="${GH_SHA:0:7}"
           TAGS=""
 
-          if [[ "${GH_REF}" == refs/tags/v* ]]; then
-            VERSION="${GH_REF_NAME#v}"
-            TAGS="${IMAGE}:${VERSION},${IMAGE}:latest"
+          if [[ -n "${DISPATCH_VERSION}" ]]; then
+            TAGS="${IMAGE}:${DISPATCH_VERSION},${IMAGE}:latest"
           elif [[ "${GH_REF}" == refs/heads/main ]]; then
             TAGS="${IMAGE}:latest,${IMAGE}:main-${SHA_SHORT}"
           elif [[ "${GH_REF}" == refs/heads/develop ]]; then

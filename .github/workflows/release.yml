@@ -1,21 +1,34 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_dispatch:
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/evolution-foundation
+  REGISTRY: registry.bellosoft.dev
+  IMAGE_PREFIX: registry.bellosoft.dev/evolution-foundation
 
 jobs:
+  version:
+    name: Generate Version
+    runs-on: [self-hosted, X64, Linux, bellosoft]
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Generate version tags
+        id: version
+        run: |
+          BUILD_DATE=$(date -u +%Y-%m-%d)
+          BUILD_VERSION="${BUILD_DATE}-${{ github.run_number }}"
+          echo "date=${BUILD_DATE}" >> $GITHUB_OUTPUT
+          echo "version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated version: ${BUILD_VERSION}"
+
   build-and-push:
     name: Build & Push ${{ matrix.service }}
-    runs-on: ubuntu-latest
+    needs: version
+    runs-on: [self-hosted, X64, Linux, bellosoft]
     permissions:
       contents: write
-      packages: write
     strategy:
       matrix:
         include:
@@ -46,16 +59,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to GitHub Container Registry
+      - name: Login to ZOD Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract version from tag
-        id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          username: admin
+          password: ${{ secrets.ZOT_PASSWORD }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -64,15 +73,15 @@ jobs:
           file: ${{ matrix.dockerfile }}
           push: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ steps.version.outputs.version }}
+            ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ needs.version.outputs.version }}
             ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   create-release:
     name: Create GitHub Release
-    needs: build-and-push
-    runs-on: ubuntu-latest
+    needs: [version, build-and-push]
+    runs-on: [self-hosted, X64, Linux, bellosoft]
     permissions:
       contents: write
     steps:
@@ -80,28 +89,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Compute Docker tag (strip leading 'v' to match what the per-service workflows publish)
-        id: dockertag
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ needs.version.outputs.version }}
           generate_release_notes: true
           body: |
             ## Docker Images
 
-            All images are available on Docker Hub under the `evoapicloud` org. The Docker tag drops the leading `v` (so the git tag `${{ github.ref_name }}` corresponds to the Docker tag `${{ steps.dockertag.outputs.version }}`):
+            All images are available on the Bellosoft registry under the `evolution-foundation` org. The Docker tag matches this release's version, `${{ needs.version.outputs.version }}`:
 
             ```bash
-            docker pull evoapicloud/evo-auth-service-community:${{ steps.dockertag.outputs.version }}
-            docker pull evoapicloud/evo-ai-crm-community:${{ steps.dockertag.outputs.version }}
-            docker pull evoapicloud/evo-ai-frontend-community:${{ steps.dockertag.outputs.version }}
-            docker pull evoapicloud/evo-ai-processor-community:${{ steps.dockertag.outputs.version }}
-            docker pull evoapicloud/evo-ai-core-service-community:${{ steps.dockertag.outputs.version }}
-            docker pull evoapicloud/evo-flow-community:${{ steps.dockertag.outputs.version }}
-            docker pull evoapicloud/evo-bot-runtime:${{ steps.dockertag.outputs.version }}
-            docker pull evoapicloud/evo-crm-gateway:${{ steps.dockertag.outputs.version }}
+            docker pull ${{ env.IMAGE_PREFIX }}/evo-auth-service-community:${{ needs.version.outputs.version }}
+            docker pull ${{ env.IMAGE_PREFIX }}/evo-ai-crm-community:${{ needs.version.outputs.version }}
+            docker pull ${{ env.IMAGE_PREFIX }}/evo-ai-frontend-community:${{ needs.version.outputs.version }}
+            docker pull ${{ env.IMAGE_PREFIX }}/evo-ai-processor-community:${{ needs.version.outputs.version }}
+            docker pull ${{ env.IMAGE_PREFIX }}/evo-ai-core-service-community:${{ needs.version.outputs.version }}
+            docker pull ${{ env.IMAGE_PREFIX }}/evo-flow-community:${{ needs.version.outputs.version }}
+            docker pull ${{ env.IMAGE_PREFIX }}/evo-bot-runtime:${{ needs.version.outputs.version }}
+            docker pull ${{ env.IMAGE_PREFIX }}/evo-crm-gateway:${{ needs.version.outputs.version }}
             ```
 
-            Or, equivalently, `:latest` always tracks the most recent tagged release.
+            Or, equivalently, `:latest` always tracks the most recent build.
