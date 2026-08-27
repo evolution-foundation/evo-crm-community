@@ -535,7 +535,7 @@ services:
       API_TITLE: ${API_TITLE:-Agent Processor Community}
       API_DESCRIPTION: ${API_DESCRIPTION:-Agent Processor Community for Evo AI}
       API_VERSION: ${API_VERSION:-1.0.0}
-      ORGANIZATION_NAME: ${ORGANIZATION_NAME:-Evo CRM}
+      ORGANIZATION_NAME: ${ORGANIZATION_NAME:-AutomaLead}
       TOOLS_CACHE_ENABLED: ${TOOLS_CACHE_ENABLED:-true}
       TOOLS_CACHE_TTL: ${TOOLS_CACHE_TTL:-3600}
     volumes:

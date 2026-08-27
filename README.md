@@ -4,10 +4,10 @@
   </a>
 </p>
 
-<h1 align="center">Evo CRM Community</h1>
+<h1 align="center">AutomaLead Community</h1>
 
 <p align="center">
-  Open-source, single-tenant AI-powered customer support platform — by Evolution Foundation.
+  Open-source, single-tenant AI-powered customer support platform — by AutomaLead
 </p>
 
 <p align="center">
@@ -28,7 +28,7 @@
 
 ## About
 
-**Evo CRM Community** is the open-source edition of the Evo CRM platform — a complete suite for AI-assisted customer support. It brings together authentication, CRM, AI agents, agent processing, bot pipelines and a modern frontend into a unified, self-hostable stack.
+**AutomaLead Community** is the open-source edition of the AutomaLead platform — a complete suite for AI-assisted customer support. It brings together authentication, CRM, AI agents, agent processing, bot pipelines and a modern frontend into a unified, self-hostable stack.
 
 This repository is the **monorepo entrypoint**: it aggregates all community services as Git submodules, giving you a single place to clone, update and orchestrate the entire platform.
 
@@ -72,7 +72,7 @@ docker pull evoapicloud/evo-ai-crm-community:1.0.0-rc2
 
 ## Architecture
 
-The Evo CRM Community platform is composed of 6 independent services:
+The AutomaLead Community platform is composed of 6 independent services:
 
 | Service | Role | Stack | Default Port |
 |---|---|---|---|
@@ -93,7 +93,7 @@ The Evo CRM Community platform is composed of 6 independent services:
 
 ### Companion services (independent versioning)
 
-The following services are part of the Evolution Foundation ecosystem but are not pinned to the Evo CRM release tag:
+The following services are part of the Evolution Foundation ecosystem but are not pinned to the AutomaLead release tag:
 
 | Service | Role |
 |---|---|
@@ -172,7 +172,7 @@ All inter-service communication uses Bearer token authentication. The token issu
 
 ## Submodules Reference
 
-### Evo CRM Community core (pinned to `v1.0.0-rc2`)
+### AutomaLead Community core (pinned to `v1.0.0-rc2`)
 
 | Submodule | Repository |
 |---|---|
@@ -208,9 +208,9 @@ All inter-service communication uses Bearer token authentication. The token issu
 
 ## Hosting
 
-Deploy Evo CRM Community with optimized infrastructure through our HostGator partnership:
+Deploy AutomaLead Community with optimized infrastructure through our HostGator partnership:
 
-[**Evo CRM VPS — HostGator**](https://evolution-api.com/vps-evo-crm)
+[**AutomaLead VPS — HostGator**](https://evolution-api.com/vps-evo-crm)
 
 ---
 
@@ -230,13 +230,13 @@ For security issues, **do not open a public issue**. Email **suporte@evofoundati
 
 ## License
 
-Evo CRM Community is licensed under the Apache License 2.0, with additional brand-protection conditions (LOGO/copyright preservation and Usage Notification requirement). See [LICENSE](./LICENSE) for full details.
+AutomaLead Community is licensed under the Apache License 2.0, with additional brand-protection conditions (LOGO/copyright preservation and Usage Notification requirement). See [LICENSE](./LICENSE) for full details.
 
 For licensing inquiries, contact **suporte@evofoundation.com.br**.
 
 ## Trademarks
 
-"Evolution Foundation", "Evolution" and "Evo CRM" are trademarks of Evolution Foundation. See [TRADEMARKS.md](./TRADEMARKS.md) for the brand assets policy.
+"Evolution Foundation", "Evolution" and "AutomaLead" are trademarks of AutomaLead See [TRADEMARKS.md](./TRADEMARKS.md) for the brand assets policy.
 
 Third-party attributions are documented in [NOTICE](./NOTICE).
 

@@ -1,6 +1,6 @@
-# Evo CRM Community — Setup Guide
+# AutomaLead Community — Setup Guide
 
-This guide gets the full Evo CRM Community stack running from a clean checkout.
+This guide gets the full AutomaLead Community stack running from a clean checkout.
 
 ## Supported deployment methods
 

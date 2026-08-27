@@ -1,5 +1,5 @@
 ## ============================================================================
-## Evo CRM Community — stack de deploy (Portainer / Docker Swarm)
+## AutomaLead Community — stack de deploy (Portainer / Docker Swarm)
 ##
 ## Antes de subir a stack, ajuste os itens marcados abaixo. Tudo que NÃO está
 ## comentado já vem pronto e não precisa ser alterado (imagens, portas, URLs
@@ -458,7 +458,7 @@ services:
       - API_TITLE=Agent Processor Community
       - API_DESCRIPTION=Agent Processor Community for Evo AI
       - API_VERSION=1.0.0
-      - ORGANIZATION_NAME=Evo CRM
+      - ORGANIZATION_NAME=AutomaLead
 
     ## 🗃️ Cache de tools
       - TOOLS_CACHE_ENABLED=true

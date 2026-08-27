@@ -1,4 +1,4 @@
-# Evo CRM Community — Troubleshooting
+# AutomaLead Community — Troubleshooting
 
 Common issues when bringing up the stack from a clean checkout, and how to fix
 them. See [SETUP-GUIDE.md](./SETUP-GUIDE.md) for the full setup flow.

@@ -1,5 +1,5 @@
 # =============================================================================
-# Evo CRM Community — Nginx API Gateway
+# AutomaLead Community — Nginx API Gateway
 # =============================================================================
 # Adapted from the production SaaS gateway configuration.
 # Routes all API traffic through a single domain, dispatching to internal

@@ -1,5 +1,5 @@
 # =============================================================================
-# Evo CRM Community — Review environment  (INTERNAL team tooling)
+# AutomaLead Community — Review environment  (INTERNAL team tooling)
 # =============================================================================
 # NOT part of the self-host quick start. Runs the published Docker Hub images
 # as a full local stack so a reviewer can TEST a card's changes running.

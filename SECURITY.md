@@ -1,6 +1,6 @@
 # Security Policy
 
-Evolution Foundation takes the security of Evo CRM Community seriously. We
+Evolution Foundation takes the security of AutomaLead Community seriously. We
 appreciate your efforts to responsibly disclose any vulnerabilities you find.
 
 ## Reporting a Vulnerability
@@ -15,7 +15,7 @@ Instead, report them privately through one of the following channels:
    repository to submit a private advisory.
 
 2. **Email** — send your report to **suporte@evofoundation.com.br** with the
-   subject line `[SECURITY] Evo CRM Community — <brief description>`.
+   subject line `[SECURITY] AutomaLead Community — <brief description>`.
 
 ### What to include
 

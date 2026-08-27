@@ -1,6 +1,6 @@
-# Contributing to Evo CRM Community
+# Contributing to AutomaLead Community
 
-Thanks for your interest in contributing to Evo CRM Community! This document
+Thanks for your interest in contributing to AutomaLead Community! This document
 outlines how to contribute effectively.
 
 ## Code of Conduct
@@ -81,7 +81,7 @@ governed separately by [TRADEMARKS.md](./TRADEMARKS.md).
 - **Documentation**: [docs.evolutionfoundation.com.br](https://docs.evolutionfoundation.com.br)
 - **Email**: suporte@evofoundation.com.br
 
-Thanks for helping make Evo CRM Community better!
+Thanks for helping make AutomaLead Community better!
 
 ---
 
