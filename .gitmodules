@@ -3,7 +3,7 @@
 	url = https://github.com/evolution-foundation/evo-auth-service-community.git
 [submodule "evo-ai-crm-community"]
 	path = evo-ai-crm-community
-	url = https://github.com/evolution-foundation/evo-ai-crm-community.git
+	url = https://github.com/Bellosoft-Limited/evo-ai-crm-community.git
 [submodule "evo-ai-frontend-community"]
 	path = evo-ai-frontend-community
 	url = https://github.com/Bellosoft-Limited/evo-ai-frontend-community.git
