@@ -67,6 +67,7 @@ jobs:
           password: ${{ secrets.ZOT_PASSWORD }}
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
@@ -77,6 +78,10 @@ jobs:
             ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Image digest
+        run: |
+          echo "${{ matrix.service }} digest: ${{ steps.build.outputs.digest }}"
 
   create-release:
     name: Create GitHub Release
