@@ -73,7 +73,7 @@ services:
 
   evocrm_auth:
     image: evoapicloud/evo-auth-service-community:latest
-    command: bash -c "bundle exec rails db:migrate 2>&1 || echo 'Migration had errors, continuing...'; bundle exec rails s -p 3001 -b 0.0.0.0"
+    command: bash -c "bundle exec rails db:migrate 2>&1 || echo 'Migration had errors, continuing...'; bundle exec rails db:seed 2>&1 || echo 'Seed had errors, continuing...'; bundle exec rails s -p 3001 -b 0.0.0.0"
 
     networks:
       - evonet ## Nome da rede interna
