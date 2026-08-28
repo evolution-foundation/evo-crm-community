@@ -4,6 +4,7 @@ services:
   # ---------------------------------------------------------------------------
   postgres:
     image: pgvector/pgvector:pg16
+    pull_policy: always
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DATABASE:-evo_community}
@@ -20,6 +21,7 @@ services:
 
   redis:
     image: redis:alpine
+    pull_policy: always
     restart: unless-stopped
     command: ["sh", "-c", "redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes"]
     volumes:
@@ -32,6 +34,7 @@ services:
 
   clickhouse:
     image: clickhouse/clickhouse-server:latest
+    pull_policy: always
     restart: unless-stopped
     environment:
       CLICKHOUSE_USER: default
@@ -50,6 +53,7 @@ services:
   # to ClickHouse); RabbitMQ is the light option the adapter supports.
   rabbitmq:
     image: rabbitmq:3-alpine
+    pull_policy: always
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: evoflow
@@ -68,6 +72,7 @@ services:
   # ---------------------------------------------------------------------------
   evo_auth_init:
     image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
+    pull_policy: always
     restart: "no"
 
     environment:
@@ -102,6 +107,7 @@ services:
 
   evo_crm_init:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
+    pull_policy: always
     restart: "no"
 
     environment:
@@ -148,6 +154,7 @@ services:
 
   evo_processor_init:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-processor-community:latest
+    pull_policy: always
     restart: "no"
 
     environment:
@@ -208,6 +215,7 @@ services:
   # ---------------------------------------------------------------------------
   evo-gateway:
     image: registry.bellosoft.dev/evolution-foundation/evo-crm-gateway:latest
+    pull_policy: always
     restart: unless-stopped
     environment:
       BACKEND_URL: ${BACKEND_URL}
@@ -232,6 +240,7 @@ services:
   # ---------------------------------------------------------------------------
   evo-auth:
     image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
+    pull_policy: always
     restart: unless-stopped
 
     environment:
@@ -284,6 +293,7 @@ services:
 
   evo-auth-sidekiq:
     image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
+    pull_policy: always
     restart: unless-stopped
 
     environment:
@@ -326,6 +336,7 @@ services:
   # ---------------------------------------------------------------------------
   evo-crm:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
+    pull_policy: always
     restart: unless-stopped
 
     environment:
@@ -391,6 +402,7 @@ services:
 
   evo-crm-sidekiq:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
+    pull_policy: always
     restart: unless-stopped
 
     environment:
@@ -441,6 +453,7 @@ services:
   # ---------------------------------------------------------------------------
   evo_core_db_init:
     image: pgvector/pgvector:pg16
+    pull_policy: always
     restart: "no"
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD}
@@ -464,6 +477,7 @@ services:
 
   evo-core:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-core-service-community:latest
+    pull_policy: always
     restart: unless-stopped
 
     environment:
@@ -510,6 +524,7 @@ services:
   # ---------------------------------------------------------------------------
   evo-processor:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-processor-community:latest
+    pull_policy: always
     restart: unless-stopped
 
     environment:
@@ -563,6 +578,7 @@ services:
   # ---------------------------------------------------------------------------
   evo-bot-runtime:
     image: evoapicloud/evo-bot-runtime:latest
+    pull_policy: always
     restart: unless-stopped
 
     environment:
@@ -597,6 +613,7 @@ services:
   # ---------------------------------------------------------------------------
   evo-flow:
     image: registry.bellosoft.dev/evolution-foundation/evo-flow-community:latest
+    pull_policy: always
     restart: unless-stopped
 
     environment:
@@ -661,6 +678,7 @@ services:
   # ---------------------------------------------------------------------------
   evo-frontend:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-frontend-community:latest
+    pull_policy: always
     restart: unless-stopped
 
     environment:
@@ -683,6 +701,7 @@ services:
   # ---------------------------------------------------------------------------
   evolution-api:
     image: evoapicloud/evolution-api:latest
+    pull_policy: always
     restart: unless-stopped
     expose:
       - "8080"
@@ -735,6 +754,7 @@ services:
   # ---------------------------------------------------------------------------
   n8n_schema_init:
     image: pgvector/pgvector:pg16
+    pull_policy: always
     restart: "no"
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD}
@@ -748,6 +768,7 @@ services:
 
   n8n-editor:
     image: n8nio/n8n:latest
+    pull_policy: always
     restart: unless-stopped
     expose:
       - "5678"
@@ -796,6 +817,7 @@ services:
 
   n8n-worker:
     image: n8nio/n8n:latest
+    pull_policy: always
     restart: unless-stopped
     expose:
       - "5678"
@@ -831,6 +853,7 @@ services:
 
   n8n-webhook:
     image: n8nio/n8n:latest
+    pull_policy: always
     restart: unless-stopped
     expose:
       - "5678"
