@@ -12,6 +12,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.DEPLOY_TOKEN }}
 
       - name: Seed .env from example
         run: cp .env.example .env
@@ -26,6 +27,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.DEPLOY_TOKEN }}
 
       - name: Lint Auth Dockerfile
         uses: hadolint/hadolint-action@v3.1.0
@@ -64,6 +66,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.DEPLOY_TOKEN }}
 
       - name: Run migration collision guard
         run: ./scripts/check_migration_collision.sh

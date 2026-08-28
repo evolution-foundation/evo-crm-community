@@ -28,6 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.DEPLOY_TOKEN }}
 
       - name: Self-test do guard (fixtures)
         run: |
