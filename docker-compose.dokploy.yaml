@@ -615,6 +615,8 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-flow-community:latest
     pull_policy: always
     restart: unless-stopped
+    expose:
+      - "3334"
 
     environment:
       NODE_ENV: ${RAILS_ENV:-production}
@@ -688,11 +690,14 @@ services:
       VITE_EVOAI_API_URL: ${BACKEND_URL}
       VITE_AGENT_PROCESSOR_URL: ${BACKEND_URL}
       VITE_WS_URL: ${BACKEND_URL}
-      # EvoFlow (Journeys/Campaigns builder). Without this the entrypoint never
-      # substitutes VITE_EVOFLOW_API_URL_PLACEHOLDER in the built JS, so the
-      # browser posts to a literal ".../VITE_EVOFLOW_API_URL_PLACEHOLDER/..."
-      # path on the frontend's own origin -> 405 (EVO-1906).
-      VITE_EVOFLOW_API_URL: ${BACKEND_URL}
+      # EvoFlow (Journeys/Campaigns builder) is called directly by the browser
+      # (open CORS, its own /api/v1 prefix — see evo-flow's main.ts), NOT
+      # proxied through evo-gateway (which has no route for it). Needs its own
+      # public domain pointed at the evo-flow service, distinct from
+      # BACKEND_URL/evo-gateway. Without this var set, the entrypoint never
+      # substitutes VITE_EVOFLOW_API_URL_PLACEHOLDER in the built JS and
+      # journeys calls 404/405 against the wrong host (EVO-1906).
+      VITE_EVOFLOW_API_URL: ${VITE_EVOFLOW_API_URL}
     expose:
       - "80"
     depends_on:
