@@ -9,10 +9,10 @@
 	url = https://github.com/Bellosoft-Limited/evo-ai-frontend-community.git
 [submodule "evo-ai-processor-community"]
 	path = evo-ai-processor-community
-	url = https://github.com/evolution-foundation/evo-ai-processor-community.git
+	url = https://github.com/Bellosoft-Limited/evo-ai-processor-community.git
 [submodule "evo-ai-core-service-community"]
 	path = evo-ai-core-service-community
-	url = https://github.com/evolution-foundation/evo-ai-core-service-community.git
+	url = https://github.com/Bellosoft-Limited/evo-ai-core-service-community.git
 [submodule "evolution-api"]
 	path = evolution-api
 	url = https://github.com/evolution-foundation/evolution-api.git
