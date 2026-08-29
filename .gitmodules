@@ -1,6 +1,6 @@
 [submodule "evo-auth-service-community"]
 	path = evo-auth-service-community
-	url = https://github.com/evolution-foundation/evo-auth-service-community.git
+	url = https://github.com/Bellosoft-Limited/evo-auth-service-community.git
 [submodule "evo-ai-crm-community"]
 	path = evo-ai-crm-community
 	url = https://github.com/Bellosoft-Limited/evo-ai-crm-community.git
@@ -15,17 +15,17 @@
 	url = https://github.com/Bellosoft-Limited/evo-ai-core-service-community.git
 [submodule "evolution-api"]
 	path = evolution-api
-	url = https://github.com/evolution-foundation/evolution-api.git
+	url = https://github.com/Bellosoft-Limited/evolution-api.git
 [submodule "evolution-go"]
 	path = evolution-go
-	url = https://github.com/evolution-foundation/evolution-go.git
+	url = https://github.com/Bellosoft-Limited/evolution-go.git
 	branch = develop
 [submodule "evo-bot-runtime"]
 	path = evo-bot-runtime
-	url = https://github.com/evolution-foundation/evo-bot-runtime.git
+	url = https://github.com/Bellosoft-Limited/evo-bot-runtime.git
 [submodule "evo-nexus"]
 	path = evo-nexus
-	url = https://github.com/evolution-foundation/evo-nexus.git
+	url = https://github.com/Bellosoft-Limited/evo-nexus.git
 [submodule "evo-flow-community"]
 	path = evo-flow-community
-	url = https://github.com/evolution-foundation/evo-flow-community.git
+	url = https://github.com/Bellosoft-Limited/evo-flow-community.git
