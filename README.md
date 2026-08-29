@@ -1,6 +1,6 @@
 <p align="center">
-  <a href="https://evolutionfoundation.com.br">
-    <img src="./public/hover-evolution.png" alt="Evolution Foundation" />
+  <a href="https://automalead.ai">
+    <img src="./public/hover-evolution.png" alt="AutomaLead" />
   </a>
 </p>
 
@@ -13,14 +13,14 @@
 <p align="center">
   <a href="https://github.com/evolution-foundation/evo-crm-community/releases/latest"><img src="https://img.shields.io/github/v/release/evolution-foundation/evo-crm-community?include_prereleases&label=version&color=00ffa7" alt="Latest version" /></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License: Apache 2.0" /></a>
-  <a href="https://docs.evolutionfoundation.com.br"><img src="https://img.shields.io/badge/Docs-evolutionfoundation.com.br-00ffa7" alt="Documentation" /></a>
-  <a href="https://evolutionfoundation.com.br/community"><img src="https://img.shields.io/badge/Community-Join%20us-white" alt="Community" /></a>
+  <a href="https://docs.automalead.ai"><img src="https://img.shields.io/badge/Docs-automalead.ai-00ffa7" alt="Documentation" /></a>
+  <a href="https://automalead.ai/community"><img src="https://img.shields.io/badge/Community-Join%20us-white" alt="Community" /></a>
 </p>
 
 <p align="center">
-  <a href="https://evolutionfoundation.com.br">Website</a> &middot;
-  <a href="https://docs.evolutionfoundation.com.br">Documentation</a> &middot;
-  <a href="https://evolutionfoundation.com.br/community">Community</a> &middot;
+  <a href="https://automalead.ai">Website</a> &middot;
+  <a href="https://docs.automalead.ai">Documentation</a> &middot;
+  <a href="https://automalead.ai/community">Community</a> &middot;
   <a href="mailto:suporte@evofoundation.com.br">Support</a>
 </p>
 
@@ -50,7 +50,7 @@ The umbrella tag pins each Community submodule at its corresponding `v1.0.0-rc2`
 | [`evo-bot-runtime`](https://github.com/evolution-foundation/evo-bot-runtime) | `v1.0.0-rc2` | `evoapicloud/evo-bot-runtime:1.0.0-rc2` | [link](https://github.com/evolution-foundation/evo-bot-runtime/releases/tag/v1.0.0-rc2) |
 | `evo-crm-gateway` (built from this repo) | `v1.0.0-rc2` | `evoapicloud/evo-crm-gateway:1.0.0-rc2` | (see umbrella release) |
 
-The following projects are **part of the broader Evolution Foundation ecosystem** but follow independent versioning:
+The following projects are **part of the broader AutomaLead ecosystem** but follow independent versioning:
 
 | Service | Repository | Notes |
 |---|---|---|
@@ -93,13 +93,13 @@ The AutomaLead Community platform is composed of 6 independent services:
 
 ### Companion services (independent versioning)
 
-The following services are part of the Evolution Foundation ecosystem but are not pinned to the AutomaLead release tag:
+The following services are part of the AutomaLead ecosystem but are not pinned to the AutomaLead release tag:
 
 | Service | Role |
 |---|---|
 | [`evolution-api`](./evolution-api) | WhatsApp messaging engine (Node.js) — used as a channel provider |
 | [`evolution-go`](./evolution-go) | WhatsApp messaging engine (Go) — alternative high-performance provider |
-| [`evo-nexus`](./evo-nexus) | Multi-agent operating layer — used internally by Evolution Foundation to coordinate development and operations |
+| [`evo-nexus`](./evo-nexus) | Multi-agent operating layer — used internally by AutomaLead to coordinate development and operations |
 
 ---
 
@@ -151,7 +151,7 @@ Refer to each service's own README for environment configuration, setup and seed
 >
 > Leaving the localhost defaults in production results in webhook callbacks pointing at the container, broken OAuth redirects and silently failed external integrations.
 
-For detailed setup instructions, visit the [full documentation](https://docs.evolutionfoundation.com.br).
+For detailed setup instructions, visit the [full documentation](https://docs.automalead.ai).
 
 ---
 
@@ -197,9 +197,9 @@ All inter-service communication uses Bearer token authentication. The token issu
 
 | Resource | Link |
 |---|---|
-| Website | [evolutionfoundation.com.br](https://evolutionfoundation.com.br) |
-| Documentation | [docs.evolutionfoundation.com.br](https://docs.evolutionfoundation.com.br) |
-| Community | [evolutionfoundation.com.br/community](https://evolutionfoundation.com.br/community) |
+| Website | [automalead.ai](https://automalead.ai) |
+| Documentation | [docs.automalead.ai](https://docs.automalead.ai) |
+| Community | [automalead.ai/community](https://automalead.ai/community) |
 | Changelog | [CHANGELOG.md](./CHANGELOG.md) |
 | Contributing | [CONTRIBUTING.md](./CONTRIBUTING.md) |
 | Security | [SECURITY.md](./SECURITY.md) |
@@ -218,7 +218,7 @@ Deploy AutomaLead Community with optimized infrastructure through our HostGator 
 
 Contributions are welcome! Please open an issue or pull request in the relevant submodule repository. See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
-Join our [community](https://evolutionfoundation.com.br/community) to discuss ideas, ask questions and collaborate.
+Join our [community](https://automalead.ai/community) to discuss ideas, ask questions and collaborate.
 
 ---
 
@@ -236,12 +236,12 @@ For licensing inquiries, contact **suporte@evofoundation.com.br**.
 
 ## Trademarks
 
-"Evolution Foundation", "Evolution" and "AutomaLead" are trademarks of AutomaLead See [TRADEMARKS.md](./TRADEMARKS.md) for the brand assets policy.
+"AutomaLead", "Evolution" and "AutomaLead" are trademarks of AutomaLead See [TRADEMARKS.md](./TRADEMARKS.md) for the brand assets policy.
 
 Third-party attributions are documented in [NOTICE](./NOTICE).
 
 ---
 
 <p align="center">
-  Made by <a href="https://evolutionfoundation.com.br">Evolution Foundation</a> · © 2026
+  Made by <a href="https://automalead.ai">AutomaLead</a> · © 2026
 </p>

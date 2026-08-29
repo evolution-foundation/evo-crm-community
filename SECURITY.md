@@ -1,6 +1,6 @@
 # Security Policy
 
-Evolution Foundation takes the security of AutomaLead Community seriously. We
+AutomaLead takes the security of AutomaLead Community seriously. We
 appreciate your efforts to responsibly disclose any vulnerabilities you find.
 
 ## Reporting a Vulnerability
@@ -60,9 +60,9 @@ vulnerabilities will be:
 
 - Credited in the security advisory (with permission)
 - Listed in our acknowledgments page (when available)
-- Eligible for public recognition via Evolution Foundation channels
+- Eligible for public recognition via AutomaLead channels
 
 ---
 
 For general inquiries (non-security): **suporte@evofoundation.com.br**
-For more information: [evolutionfoundation.com.br](https://evolutionfoundation.com.br)
+For more information: [automalead.ai](https://automalead.ai)

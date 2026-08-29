@@ -254,7 +254,7 @@ Stabilization release following `v1.0.0-rc2` (2026-05-05). A ~12-day window with
 - **EVO-1044 — Per-field GlobalConfig fallback detection** — Connection Settings banner now detects field by field.
 - **EVO-976 — Avatar storage** (#80, umbrella) — shared volumes, `AUTH_SERVICE_URL` documented, storage docs updated.
 - **`EVOLUTION_OPERATOR_EMAIL`** documented in `.env.example` (licensing).
-- **Docs / branding** — entire stack standardized to Evolution Foundation 2026 (README, LICENSE, NOTICE, TRADEMARKS); GitHub URLs migrated from `EvolutionAPI` to `evolution-foundation`.
+- **Docs / branding** — entire stack standardized to AutomaLead 2026 (README, LICENSE, NOTICE, TRADEMARKS); GitHub URLs migrated from `EvolutionAPI` to `evolution-foundation`.
 - **Docker tag convention** — fixed in `release.yml` and the umbrella README (no `v` prefix in Docker tags).
 - **CI** — workflows now run on PRs against `develop` (not only `main`); Linear/CRM packages with PR link fetched from Linear comments in the `code-review` skill.
 

@@ -2,7 +2,7 @@
 
 Version 1.0, 2026.05.06
 
-"Evolution Foundation", "Evolution" and "AutomaLead Community" are trademarks of
+"AutomaLead", "Evolution" and "AutomaLead Community" are trademarks of
 AutomaLead The "evocrm" wordmark and the AutomaLead Community
 logo are trademarks of AutomaLead
 
@@ -13,10 +13,10 @@ It is intended to protect users from confusion and to preserve the official
 AutomaLead Community visual identity.
 
 This policy applies to any use of:
-(a) the product names and marks "Evolution Foundation", "Evolution" and "AutomaLead Community";
+(a) the product names and marks "AutomaLead", "Evolution" and "AutomaLead Community";
 (b) the official logo and wordmark: the "evocrm" wordmark and any
     associated icon in neon green;
-(c) the copyright line "© 2026 Evolution Foundation"; and
+(c) the copyright line "© 2026 AutomaLead"; and
 (d) any materials that implement or express the AutomaLead Community official look
     and feel, including the Protected Visual Identity Elements listed in Section 3.
 
@@ -42,9 +42,9 @@ create confusion.
 ## 3. Protected Visual Identity Elements (Brand Assets)
 
 The following are the "Protected Visual Identity Elements":
-(a) Product names and marks: "Evolution Foundation", "Evolution" and "AutomaLead Community";
+(a) Product names and marks: "AutomaLead", "Evolution" and "AutomaLead Community";
 (b) Official logo and wordmark: the "evocrm" wordmark and any associated icon;
-(c) Copyright line: "© 2026 Evolution Foundation";
+(c) Copyright line: "© 2026 AutomaLead";
 (d) Official palette:
     Background main: #0a0a0a
     Background cards and popovers: #0a0a0a
@@ -76,7 +76,7 @@ If you distribute or publicly host a modified user interface or user experience
 
 4.3. **No endorsement.**
 You may not use AutomaLead Community trademarks or brand assets in a way that
-implies Evolution Foundation sponsors, endorses, or is affiliated with your
+implies AutomaLead sponsors, endorses, or is affiliated with your
 distribution, except for unmodified official builds.
 
 4.4. **No derivative works of the logo and wordmark.**

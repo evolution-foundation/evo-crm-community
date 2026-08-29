@@ -77,12 +77,12 @@ governed separately by [TRADEMARKS.md](./TRADEMARKS.md).
 
 ## Questions?
 
-- **Community**: [evolutionfoundation.com.br/community](https://evolutionfoundation.com.br/community)
-- **Documentation**: [docs.evolutionfoundation.com.br](https://docs.evolutionfoundation.com.br)
+- **Community**: [automalead.ai/community](https://automalead.ai/community)
+- **Documentation**: [docs.automalead.ai](https://docs.automalead.ai)
 - **Email**: suporte@evofoundation.com.br
 
 Thanks for helping make AutomaLead Community better!
 
 ---
 
-© 2026 Evolution Foundation
+© 2026 AutomaLead
