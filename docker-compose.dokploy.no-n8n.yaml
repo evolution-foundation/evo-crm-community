@@ -1,0 +1,769 @@
+services:
+  # ---------------------------------------------------------------------------
+  # Infrastructure
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg16
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE:-evo_community}
+      POSTGRES_USER: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  redis:
+    image: redis:alpine
+    pull_policy: always
+    restart: unless-stopped
+    command: ["sh", "-c", "redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DB: default
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--user", "default", "--password", "${CLICKHOUSE_PASSWORD}", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # EvoFlow requires a broker on boot even in QUEUE_MODE=direct (writes straight
+  # to ClickHouse); RabbitMQ is the light option the adapter supports.
+  rabbitmq:
+    image: rabbitmq:3-alpine
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: evoflow
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # One-shot initialization jobs (run once per deployment)
+  # ---------------------------------------------------------------------------
+  evo_auth_init:
+    image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
+    pull_policy: always
+    restart: "no"
+
+    environment:
+      RAILS_ENV: ${RAILS_ENV:-production}
+      RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
+      BACKEND_URL: ${BACKEND_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE:-evo_community}
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+      POSTGRES_HOST: postgres
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      DOORKEEPER_JWT_SECRET_KEY: ${DOORKEEPER_JWT_SECRET_KEY}
+      DOORKEEPER_JWT_ALGORITHM: ${DOORKEEPER_JWT_ALGORITHM:-hs256}
+      DOORKEEPER_JWT_ISS: ${DOORKEEPER_JWT_ISS:-evo-auth-service}
+      MFA_ISSUER: ${MFA_ISSUER:-EvoCRM}
+      MAILER_SENDER_EMAIL: ${MAILER_SENDER_EMAIL:-noreply@evo.local}
+      ACTIVE_STORAGE_SERVICE: ${ACTIVE_STORAGE_SERVICE:-local}
+      ACTIVE_STORAGE_URL: ${BACKEND_URL}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+    volumes:
+      - auth_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: sh -c "(bundle exec rails db:prepare || echo 'Auth db:prepare non-fatal error') && (bundle exec rails db:seed || echo 'Auth seed skipped (already applied or non-fatal error)')"
+
+  evo_crm_init:
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
+    pull_policy: always
+    restart: "no"
+
+    environment:
+      RAILS_ENV: ${RAILS_ENV:-production}
+      BACKEND_URL: ${BACKEND_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE:-evo_community}
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      POSTGRES_HOST: postgres
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
+      EVO_AUTH_SERVICE_URL: http://evo-auth:3001
+      EVO_AI_CORE_SERVICE_URL: http://evo-core:5555
+      BOT_RUNTIME_URL: http://evo-bot-runtime:8080
+      BOT_RUNTIME_SECRET: ${BOT_RUNTIME_SECRET}
+      BOT_RUNTIME_POSTBACK_BASE_URL: http://evo-crm:3000
+      ACTIVE_STORAGE_SERVICE: ${ACTIVE_STORAGE_SERVICE:-local}
+      ACTIVE_STORAGE_URL: ${BACKEND_URL}
+    volumes:
+      - crm_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      evo_auth_init:
+        condition: service_completed_successfully
+      evo-auth:
+        condition: service_healthy
+    command:
+      - sh
+      - -c
+      - |
+        set +e
+        bundle exec rails db:schema:load || echo "CRM db:schema:load non-fatal error"
+        bundle exec rails runner "conn = ActiveRecord::Base.connection; pending = conn.migration_context.open.pending_migrations; puts \"Pending migrations before normalize: #{pending.size}\"; pending.each { |m| conn.execute(\"INSERT INTO schema_migrations (version) VALUES ('#{m.version}') ON CONFLICT (version) DO NOTHING\") }; puts \"Pending migrations normalized\";" || echo "CRM normalize migrations non-fatal error"
+        bundle exec rails db:seed || echo "CRM seed skipped (already applied or non-fatal error)"
+        exit 0
+
+  evo_processor_init:
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-processor-community:latest
+    pull_policy: always
+    restart: "no"
+
+    environment:
+      POSTGRES_CONNECTION_STRING: postgresql://${POSTGRES_USERNAME:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE:-evo_community}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_SSL: "false"
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
+      EVO_AI_CRM_URL: http://evo-crm:3000
+      CORE_SERVICE_URL: http://evo-core:5555/api/v1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      evo-core:
+        condition: service_started
+    command:
+      - sh
+      - -c
+      - |
+        python - <<'PY'
+        import asyncio
+        import os
+        import asyncpg
+
+        dsn = os.environ["POSTGRES_CONNECTION_STRING"]
+
+        async def wait_core_table():
+          for i in range(90):
+            try:
+              conn = await asyncpg.connect(dsn)
+              exists = await conn.fetchval("SELECT to_regclass('public.evo_core_agents') IS NOT NULL;")
+              await conn.close()
+              if exists:
+                print("evo_core_agents found; continuing processor migrations")
+                return
+              print(f"waiting evo_core_agents... attempt {i + 1}/90")
+            except Exception as e:
+              print(f"waiting postgres/core readiness... {e}")
+            await asyncio.sleep(2)
+          raise SystemExit("Timeout waiting for evo_core_agents table")
+
+        asyncio.run(wait_core_table())
+        PY
+        alembic upgrade head 2>&1 || echo "Alembic migration had errors, continuing..."
+        python -m scripts.run_seeders
+
+  # evo-flow creates its own dedicated 'evo_campaign' database and runs its
+  # TypeORM migrations on boot (see evo-flow's own command) — no separate init
+  # job needed here, unlike the Rails/Go services above.
+
+  # ---------------------------------------------------------------------------
+  # API Gateway
+  # ---------------------------------------------------------------------------
+  evo-gateway:
+    image: registry.bellosoft.dev/evolution-foundation/evo-crm-gateway:latest
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: ${BACKEND_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+    expose:
+      - "3030"
+    depends_on:
+      evo-auth:
+        condition: service_started
+      evo-crm:
+        condition: service_started
+      evo-core:
+        condition: service_started
+      evo-processor:
+        condition: service_started
+      evo-bot-runtime:
+        condition: service_started
+
+  # ---------------------------------------------------------------------------
+  # Auth
+  # ---------------------------------------------------------------------------
+  evo-auth:
+    image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
+    pull_policy: always
+    restart: unless-stopped
+
+    environment:
+      RAILS_ENV: ${RAILS_ENV:-production}
+      RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
+      BACKEND_URL: ${BACKEND_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE:-evo_community}
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      DOORKEEPER_JWT_SECRET_KEY: ${DOORKEEPER_JWT_SECRET_KEY}
+      DOORKEEPER_JWT_ALGORITHM: ${DOORKEEPER_JWT_ALGORITHM:-hs256}
+      DOORKEEPER_JWT_ISS: ${DOORKEEPER_JWT_ISS:-evo-auth-service}
+      MFA_ISSUER: ${MFA_ISSUER:-EvoCRM}
+      SIDEKIQ_CONCURRENCY: ${SIDEKIQ_CONCURRENCY:-10}
+      MAILER_SENDER_EMAIL: ${MAILER_SENDER_EMAIL:-noreply@evo.local}
+      ACTIVE_STORAGE_SERVICE: ${ACTIVE_STORAGE_SERVICE:-local}
+      ACTIVE_STORAGE_URL: ${BACKEND_URL}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      # Expected value for the CRM's X-Service-Token on server-to-server
+      # permission checks (EvoAuthService#check_user_permission etc.). Without
+      # this, expected_service_token is blank and every such check fails
+      # closed with "Invalid service token" -> 403 on teams/inboxes/etc.
+      EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
+    volumes:
+      - auth_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      evo_auth_init:
+        condition: service_completed_successfully
+    command: sh -c "rm -f /rails/tmp/pids/server.pid && bundle exec rails s -p 3001 -b 0.0.0.0"
+    networks:
+      default:
+        aliases:
+          - evo_auth
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3001/health || curl -fsS http://localhost:3001/up || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 180s
+
+  evo-auth-sidekiq:
+    image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
+    pull_policy: always
+    restart: unless-stopped
+
+    environment:
+      RAILS_ENV: ${RAILS_ENV:-production}
+      BACKEND_URL: ${BACKEND_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE:-evo_community}
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      DOORKEEPER_JWT_SECRET_KEY: ${DOORKEEPER_JWT_SECRET_KEY}
+      DOORKEEPER_JWT_ALGORITHM: ${DOORKEEPER_JWT_ALGORITHM:-hs256}
+      DOORKEEPER_JWT_ISS: ${DOORKEEPER_JWT_ISS:-evo-auth-service}
+      MFA_ISSUER: ${MFA_ISSUER:-EvoCRM}
+      SIDEKIQ_CONCURRENCY: ${SIDEKIQ_CONCURRENCY:-10}
+      MAILER_SENDER_EMAIL: ${MAILER_SENDER_EMAIL:-noreply@evo.local}
+      ACTIVE_STORAGE_SERVICE: ${ACTIVE_STORAGE_SERVICE:-local}
+      ACTIVE_STORAGE_URL: ${BACKEND_URL}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
+    volumes:
+      - auth_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      evo_auth_init:
+        condition: service_completed_successfully
+    command: sh -c "bundle exec sidekiq"
+    healthcheck:
+      disable: true
+
+  # ---------------------------------------------------------------------------
+  # CRM
+  # ---------------------------------------------------------------------------
+  evo-crm:
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
+    pull_policy: always
+    restart: unless-stopped
+
+    environment:
+      RAILS_ENV: ${RAILS_ENV:-production}
+      RAILS_SERVE_STATIC_FILES: ${RAILS_SERVE_STATIC_FILES:-true}
+      RAILS_LOG_TO_STDOUT: ${RAILS_LOG_TO_STDOUT:-true}
+      BACKEND_URL: ${BACKEND_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE:-evo_community}
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
+      EVO_AUTH_SERVICE_URL: http://evo-auth:3001
+      EVO_AI_CORE_SERVICE_URL: http://evo-core:5555
+      # EvoFlow (Segments screen + contact event tracking). Without these 4 vars
+      # the CRM raises EvoFlow::ConfigurationError and /api/v1/segments 500s.
+      # EVO_FLOW_ALLOW_INSECURE=true is required: RAILS_ENV=production + http://
+      # on the internal network.
+      EVO_FLOW_ENABLED: ${EVO_FLOW_ENABLED:-true}
+      EVO_FLOW_API_URL: http://evo-flow:3334/api/v1
+      AUTH_APIKEY_INTEGRATION_LOCAL: ${AUTH_APIKEY_INTEGRATION_LOCAL}
+      EVO_FLOW_ALLOW_INSECURE: "true"
+      DISABLE_TELEMETRY: ${DISABLE_TELEMETRY:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      ENABLE_ACCOUNT_SIGNUP: ${ENABLE_ACCOUNT_SIGNUP:-true}
+      ENABLE_PUSH_RELAY_SERVER: ${ENABLE_PUSH_RELAY_SERVER:-true}
+      ENABLE_INBOX_EVENTS: ${ENABLE_INBOX_EVENTS:-true}
+      BOT_RUNTIME_URL: http://evo-bot-runtime:8080
+      BOT_RUNTIME_SECRET: ${BOT_RUNTIME_SECRET}
+      BOT_RUNTIME_POSTBACK_BASE_URL: http://evo-crm:3000
+      ACTIVE_STORAGE_SERVICE: ${ACTIVE_STORAGE_SERVICE:-local}
+      ACTIVE_STORAGE_URL: ${BACKEND_URL}
+    volumes:
+      - crm_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      evo_auth_init:
+        condition: service_completed_successfully
+      evo_crm_init:
+        condition: service_completed_successfully
+      evo-flow:
+        condition: service_started
+    command: sh -c "rm -f /rails/tmp/pids/server.pid && bundle exec rails s -p 3000 -b 0.0.0.0"
+    networks:
+      default:
+        aliases:
+          - evo_crm
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  evo-crm-sidekiq:
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
+    pull_policy: always
+    restart: unless-stopped
+
+    environment:
+      RAILS_ENV: ${RAILS_ENV:-production}
+      BACKEND_URL: ${BACKEND_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE:-evo_community}
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
+      EVO_AUTH_SERVICE_URL: http://evo-auth:3001
+      EVO_AI_CORE_SERVICE_URL: http://evo-core:5555
+      # EvoFlow — the sidekiq worker emits tracking events too; same values as evo-crm.
+      EVO_FLOW_ENABLED: ${EVO_FLOW_ENABLED:-true}
+      EVO_FLOW_API_URL: http://evo-flow:3334/api/v1
+      AUTH_APIKEY_INTEGRATION_LOCAL: ${AUTH_APIKEY_INTEGRATION_LOCAL}
+      EVO_FLOW_ALLOW_INSECURE: "true"
+      BOT_RUNTIME_URL: http://evo-bot-runtime:8080
+      BOT_RUNTIME_SECRET: ${BOT_RUNTIME_SECRET}
+      BOT_RUNTIME_POSTBACK_BASE_URL: http://evo-crm:3000
+      ACTIVE_STORAGE_SERVICE: ${ACTIVE_STORAGE_SERVICE:-local}
+      ACTIVE_STORAGE_URL: ${BACKEND_URL}
+    volumes:
+      - crm_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      evo_auth_init:
+        condition: service_completed_successfully
+      evo_crm_init:
+        condition: service_completed_successfully
+      evo-flow:
+        condition: service_started
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    healthcheck:
+      disable: true
+
+  # ---------------------------------------------------------------------------
+  # Core
+  # ---------------------------------------------------------------------------
+  evo_core_db_init:
+    image: pgvector/pgvector:pg16
+    pull_policy: always
+    restart: "no"
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - sh
+      - -c
+      - |
+        psql -h postgres -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DATABASE:-evo_community} -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";" 2>&1 || true
+        psql -h postgres -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DATABASE:-evo_community} -c "UPDATE evo_core_community_schema_migrations SET dirty = false WHERE dirty = true;" 2>&1 || true
+        # Stamp the processor's Alembic head so a repeat deploy never wipes its
+        # migration history (evo-core has nothing to do with alembic_version;
+        # this table belongs to evo-ai-processor-community, which shares this
+        # Postgres instance). ON CONFLICT is a no-op if already stamped; the
+        # whole statement is a no-op (swallowed by `|| true`) on a fresh
+        # install where the table doesn't exist yet.
+        psql -h postgres -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DATABASE:-evo_community} -c "INSERT INTO alembic_version (version_num) VALUES ('26a14ac7025d') ON CONFLICT DO NOTHING;" 2>&1 || true
+        echo "evo_core_db_init complete"
+
+  evo-core:
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-core-service-community:latest
+    pull_policy: always
+    restart: unless-stopped
+
+    environment:
+      PORT: "5555"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USERNAME:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DATABASE:-evo_community}
+      DB_SSLMODE: disable
+      DB_MAX_IDLE_CONNS: ${DB_MAX_IDLE_CONNS:-10}
+      DB_MAX_OPEN_CONNS: ${DB_MAX_OPEN_CONNS:-100}
+      DB_CONN_MAX_LIFETIME: ${DB_CONN_MAX_LIFETIME:-1h}
+      DB_CONN_MAX_IDLE_TIME: ${DB_CONN_MAX_IDLE_TIME:-30m}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      EVOLUTION_BASE_URL: http://evo-crm:3000
+      EVO_AUTH_BASE_URL: http://evo-auth:3001
+      AI_PROCESSOR_URL: http://evo-processor:8000
+      AI_PROCESSOR_VERSION: ${AI_PROCESSOR_VERSION:-v1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      evo_auth_init:
+        condition: service_completed_successfully
+      evo_core_db_init:
+        condition: service_completed_successfully
+    networks:
+      default:
+        aliases:
+          - evo_core
+    healthcheck:
+      # /health is a root route (not behind EvoAuth); 127.0.0.1 forces IPv4.
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5555/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Processor
+  # ---------------------------------------------------------------------------
+  evo-processor:
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-processor-community:latest
+    pull_policy: always
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_CONNECTION_STRING: postgresql://${POSTGRES_USERNAME:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE:-evo_community}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_SSL: "false"
+      REDIS_DB: ${REDIS_DB:-0}
+      REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-a2a:}
+      REDIS_TTL: ${REDIS_TTL:-3600}
+      HOST: ${HOST:-0.0.0.0}
+      PORT: ${PROCESSOR_PORT:-8000}
+      DEBUG: ${DEBUG:-false}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
+      EVO_AI_CRM_URL: http://evo-crm:3000
+      CORE_SERVICE_URL: http://evo-core:5555/api/v1
+      EVO_AUTH_BASE_URL: http://evo-auth:3001
+      APP_URL: ${BACKEND_URL}
+      API_URL: ${BACKEND_URL}
+      API_TITLE: ${API_TITLE:-Agent Processor Community}
+      API_DESCRIPTION: ${API_DESCRIPTION:-Agent Processor Community for Evo AI}
+      API_VERSION: ${API_VERSION:-1.0.0}
+      ORGANIZATION_NAME: ${ORGANIZATION_NAME:-AutomaLead}
+      TOOLS_CACHE_ENABLED: ${TOOLS_CACHE_ENABLED:-true}
+      TOOLS_CACHE_TTL: ${TOOLS_CACHE_TTL:-3600}
+    volumes:
+      - processor_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      evo_processor_init:
+        condition: service_completed_successfully
+    networks:
+      default:
+        aliases:
+          - evo_processor
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Bot Runtime
+  # ---------------------------------------------------------------------------
+  evo-bot-runtime:
+    image: evoapicloud/evo-bot-runtime:latest
+    pull_policy: always
+    restart: unless-stopped
+
+    environment:
+      LISTEN_ADDR: 0.0.0.0:8080
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      AI_PROCESSOR_URL: http://evo-processor:8000
+      BOT_RUNTIME_SECRET: ${BOT_RUNTIME_SECRET}
+      AI_CALL_TIMEOUT_SECONDS: ${AI_CALL_TIMEOUT_SECONDS:-30}
+    depends_on:
+      redis:
+        condition: service_healthy
+      evo_processor_init:
+        condition: service_completed_successfully
+    networks:
+      default:
+        aliases:
+          - evo_bot_runtime
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # EvoFlow (journeys / campaigns) — serves /api/v1/segments to the CRM (which
+  # proxies it) and stores contact events in ClickHouse. Uses a DEDICATED
+  # Postgres DB (evo_campaign) — it reads the CRM over HTTP, not the shared
+  # evo_community schema. Boots in api + QUEUE_MODE=direct + WRITE_MODE=ch-sync
+  # (no Kafka/Temporal): the API serves event ingestion + reads and writes
+  # straight to ClickHouse.
+  # ---------------------------------------------------------------------------
+  evo-flow:
+    image: registry.bellosoft.dev/evolution-foundation/evo-flow-community:latest
+    pull_policy: always
+    restart: unless-stopped
+    expose:
+      - "3334"
+
+    environment:
+      NODE_ENV: ${RAILS_ENV:-production}
+      RUN_MODE: api
+      QUEUE_MODE: direct
+      STORAGE_MODE: clickhouse
+      WRITE_MODE: ch-sync
+      PORT: "3334"
+      LOG_LEVEL: log
+      AUTH_APIKEY_INTEGRATION_LOCAL: ${AUTH_APIKEY_INTEGRATION_LOCAL}
+      EVO_AUTH_SERVICE_URL: http://evo-auth:3001
+      EVO_AUTH_VALIDATE_TOKEN_ENDPOINT: /api/v1/auth/validate
+      EVOAI_CRM_BASE_URL: http://evo-crm:3000
+      EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
+      # The global BrokerModule still boots in api/direct mode and connects, so
+      # a broker is required even though ingestion writes straight to ClickHouse.
+      BROKER_TYPE: rabbitmq
+      RABBITMQ_URL: amqp://evoflow:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_DATABASE: evo_campaign
+      CLICKHOUSE_USERNAME: default
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_TABLE: contact_events
+      POSTGRES_DB_HOST: postgres
+      POSTGRES_DB_PORT: "5432"
+      POSTGRES_DB_USERNAME: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB_DATABASE: evo_campaign
+      # Cache de token/sessão — DB 4 para não colidir com o CRM (0/1).
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DB: "4"
+    command:
+      - sh
+      - -c
+      - |
+        until node -e 'require("http").get("http://clickhouse:8123/ping",r=>process.exit(r.statusCode===200?0:1)).on("error",()=>process.exit(1))'; do echo 'Waiting for clickhouse...'; sleep 5; done
+        node -e 'const{Client}=require("pg");const db=process.env.POSTGRES_DB_DATABASE;const c=new Client({host:process.env.POSTGRES_DB_HOST,port:+(process.env.POSTGRES_DB_PORT||5432),user:process.env.POSTGRES_DB_USERNAME,password:process.env.POSTGRES_DB_PASSWORD,database:"postgres"});c.connect().then(()=>c.query("CREATE DATABASE "+db)).then(()=>console.log("[init] created "+db)).catch(e=>console.log("[init] "+(e.code==="42P04"?"db already exists":e.message))).finally(()=>c.end());'
+        node_modules/.bin/typeorm migration:run -d dist/database/ormconfig.js || echo "[init] migration:run failed (continuing)"
+        exec node dist/main.js
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      evo-auth:
+        condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - evo_flow
+
+  # ---------------------------------------------------------------------------
+  # Frontend
+  # ---------------------------------------------------------------------------
+  evo-frontend:
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-frontend-community:latest
+    pull_policy: always
+    restart: unless-stopped
+
+    environment:
+      VITE_APP_ENV: production
+      VITE_API_URL: ${BACKEND_URL}
+      VITE_AUTH_API_URL: ${BACKEND_URL}
+      VITE_EVOAI_API_URL: ${BACKEND_URL}
+      VITE_AGENT_PROCESSOR_URL: ${BACKEND_URL}
+      VITE_WS_URL: ${BACKEND_URL}
+      # EvoFlow (Journeys/Campaigns builder) is called directly by the browser
+      # (open CORS, its own /api/v1 prefix — see evo-flow's main.ts), NOT
+      # proxied through evo-gateway (which has no route for it). Needs its own
+      # public domain pointed at the evo-flow service, distinct from
+      # BACKEND_URL/evo-gateway. Without this var set, the entrypoint never
+      # substitutes VITE_EVOFLOW_API_URL_PLACEHOLDER in the built JS and
+      # journeys calls 404/405 against the wrong host (EVO-1906).
+      VITE_EVOFLOW_API_URL: ${VITE_EVOFLOW_API_URL}
+    expose:
+      - "80"
+    depends_on:
+      evo-gateway:
+        condition: service_started
+
+  # ---------------------------------------------------------------------------
+  # Evolution API (WhatsApp/Baileys gateway) — reuses the shared postgres/redis
+  # above (own tables in the same DB via DATABASE_CONNECTION_CLIENT_NAME, own
+  # Redis DB index to avoid colliding with the other services' cache).
+  # ---------------------------------------------------------------------------
+  evolution-api:
+    image: evoapicloud/evolution-api:latest
+    pull_policy: always
+    restart: unless-stopped
+    expose:
+      - "8080"
+    volumes:
+      - evolution_data:/evolution/store
+      - evolution_data:/evolution/instances
+    environment:
+      SERVER_URL: ${EVOLUTION_PUBLIC_URL}
+      AUTHENTICATION_TYPE: apikey
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "true"
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://${POSTGRES_USERNAME:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE:-evo_community}
+      DATABASE_CONNECTION_CLIENT_NAME: evolution
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "false"
+      DATABASE_SAVE_MESSAGE_UPDATE: "false"
+      DATABASE_SAVE_DATA_CONTACTS: "false"
+      DATABASE_SAVE_DATA_CHATS: "false"
+      DATABASE_SAVE_DATA_LABELS: "false"
+      DATABASE_SAVE_DATA_HISTORIC: "false"
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://:${REDIS_PASSWORD}@redis:6379/2
+      CACHE_REDIS_PREFIX_KEY: evolution
+      CACHE_REDIS_SAVE_INSTANCES: "true"
+      LOG_LEVEL: ${EVOLUTION_LOG_LEVEL:-ERROR,WARN,INFO}
+      LOG_COLOR: "true"
+      LOG_BAILEYS: warn
+      DEL_INSTANCE: "false"
+      LANGUAGE: ${EVOLUTION_LANGUAGE:-pt-BR}
+      CORS_ORIGIN: "*"
+      CORS_METHODS: GET,POST,PUT,DELETE
+      CORS_CREDENTIALS: "true"
+      WEBSOCKET_ENABLED: "true"
+      WEBSOCKET_GLOBAL_EVENTS: "false"
+      N8N_ENABLED: "false"
+      OPENAI_ENABLED: "false"
+      DIFY_ENABLED: "false"
+      EVOAI_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  processor_logs:
+  clickhouse_data:
+  rabbitmq_data:
+  crm_storage:
+  auth_storage:
+  evolution_data:
