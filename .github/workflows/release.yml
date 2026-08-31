@@ -1,4 +1,11 @@
-name: Release
+name: Release (all services, manual fallback)
+
+# Each service now has its own scoped release workflow
+# (.github/workflows/bellosoft-release.yml in that repo), triggered
+# automatically on push to that repo's main. This workflow rebuilds ALL
+# services from whatever commit the superrepo currently pins them to -- kept
+# around for the rare case of needing to rebuild everything at once (e.g.
+# after a shared base-image change), not for routine per-service releases.
 
 on:
   workflow_dispatch:
@@ -112,8 +119,9 @@ jobs:
             docker pull ${{ env.IMAGE_PREFIX }}/evo-ai-processor-community:${{ needs.version.outputs.version }}
             docker pull ${{ env.IMAGE_PREFIX }}/evo-ai-core-service-community:${{ needs.version.outputs.version }}
             docker pull ${{ env.IMAGE_PREFIX }}/evo-flow-community:${{ needs.version.outputs.version }}
-            docker pull ${{ env.IMAGE_PREFIX }}/evo-bot-runtime:${{ needs.version.outputs.version }}
-            docker pull ${{ env.IMAGE_PREFIX }}/evo-crm-gateway:${{ needs.version.outputs.version }}
             ```
+
+            evo-bot-runtime and evo-crm-gateway are released independently (their own
+            per-repo bellosoft-release.yml / gateway-publish.yml), not by this workflow.
 
             Or, equivalently, `:latest` always tracks the most recent build.

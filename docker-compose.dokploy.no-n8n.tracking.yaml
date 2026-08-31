@@ -577,7 +577,7 @@ services:
   # Bot Runtime
   # ---------------------------------------------------------------------------
   evo-bot-runtime:
-    image: evoapicloud/evo-bot-runtime:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-bot-runtime:latest
     pull_policy: always
     restart: unless-stopped
 
@@ -791,6 +791,8 @@ services:
       META_CAPI_TOKEN: ${META_CAPI_TOKEN}
       GA4_MEASUREMENT_ID: ${GA4_MEASUREMENT_ID}
       GA4_API_SECRET: ${GA4_API_SECRET}
+      META_AD_ACCOUNT_ID: ${META_AD_ACCOUNT_ID}
+      META_ADS_READ_TOKEN: ${META_ADS_READ_TOKEN}
       EVOCRM_BASE_URL: http://evo-crm:3000
       EVOCRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
       WEBHOOK_TOKEN_HOTMART: ${WEBHOOK_TOKEN_HOTMART}

@@ -472,7 +472,7 @@ services:
 ## --------------------------- ORION --------------------------- ##
 
   evocrm_bot_runtime:
-    image: evoapicloud/evo-bot-runtime:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-bot-runtime:latest
 
     networks:
       - evonet ## Nome da rede interna
