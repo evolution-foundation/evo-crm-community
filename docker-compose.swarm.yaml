@@ -55,6 +55,13 @@ services:
       - BOT_RUNTIME_UPSTREAM=evocrm_bot_runtime:8080
 
     deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
       placement:
         constraints:
           - node.role == manager
@@ -139,6 +146,13 @@ services:
     volumes:
       - evoauth_storage:/app/storage
     deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1.5G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
       placement:
         constraints:
           - node.role == manager
@@ -215,6 +229,13 @@ services:
     volumes:
       - evoauth_storage:/app/storage
     deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
       placement:
         constraints:
           - node.role == manager
@@ -295,6 +316,13 @@ services:
     volumes:
       - evocrm_storage:/app/storage
     deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2.5G
+        reservations:
+          cpus: "0.5"
+          memory: 768M
       placement:
         constraints:
           - node.role == manager
@@ -362,6 +390,13 @@ services:
     volumes:
       - evocrm_storage:/app/storage
     deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1.5G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
       placement:
         constraints:
           - node.role == manager
@@ -405,6 +440,13 @@ services:
       - AI_PROCESSOR_VERSION=v1
 
     deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
       placement:
         constraints:
           - node.role == manager
@@ -465,6 +507,13 @@ services:
       - TOOLS_CACHE_TTL=3600
 
     deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 768M
       placement:
         constraints:
           - node.role == manager
@@ -490,6 +539,13 @@ services:
       - AI_CALL_TIMEOUT_SECONDS=30
 
     deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
       placement:
         constraints:
           - node.role == manager
@@ -514,6 +570,13 @@ services:
       - VITE_WS_URL=https://SUBDOMAIN_API
 
     deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
       placement:
         constraints:
           - node.role == manager
@@ -549,6 +612,13 @@ services:
     #ports:
     #  - 6379:6379
     deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
       placement:
         constraints:
           - node.role == manager
@@ -572,6 +642,13 @@ services:
     networks:
       - evonet ## Nome da rede interna
     deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "1.0"
+          memory: 2G
       placement:
         constraints:
           - node.role == manager
@@ -593,6 +670,13 @@ services:
     networks:
       - evonet ## Nome da rede interna
     deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
       placement:
         constraints:
           - node.role == manager
@@ -662,6 +746,13 @@ services:
       - REDIS_DB=4
 
     deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1.5G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
       placement:
         constraints:
           - node.role == manager

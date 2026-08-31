@@ -6,6 +6,14 @@ services:
     image: pgvector/pgvector:pg16
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 3G
+        reservations:
+          cpus: "0.5"
+          memory: 1G
     environment:
       POSTGRES_DB: ${POSTGRES_DATABASE:-evo_community}
       POSTGRES_USER: ${POSTGRES_USERNAME:-postgres}
@@ -23,6 +31,14 @@ services:
     image: redis:alpine
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
     command: ["sh", "-c", "redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes"]
     volumes:
       - redis_data:/data
@@ -36,6 +52,14 @@ services:
     image: clickhouse/clickhouse-server:latest
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "1.0"
+          memory: 2G
     environment:
       CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
@@ -55,6 +79,14 @@ services:
     image: rabbitmq:3-alpine
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
     environment:
       RABBITMQ_DEFAULT_USER: evoflow
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
@@ -74,6 +106,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
     pull_policy: always
     restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
     environment:
       RAILS_ENV: ${RAILS_ENV:-production}
@@ -109,6 +149,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
     pull_policy: always
     restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
     environment:
       RAILS_ENV: ${RAILS_ENV:-production}
@@ -156,6 +204,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-processor-community:latest
     pull_policy: always
     restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
     environment:
       POSTGRES_CONNECTION_STRING: postgresql://${POSTGRES_USERNAME:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE:-evo_community}
@@ -217,6 +273,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-crm-gateway:latest
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
     environment:
       BACKEND_URL: ${BACKEND_URL}
       FRONTEND_URL: ${FRONTEND_URL}
@@ -242,6 +306,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1.5G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
 
     environment:
       RAILS_ENV: ${RAILS_ENV:-production}
@@ -295,6 +367,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
     environment:
       RAILS_ENV: ${RAILS_ENV:-production}
@@ -338,6 +418,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2.5G
+        reservations:
+          cpus: "0.5"
+          memory: 768M
 
     environment:
       RAILS_ENV: ${RAILS_ENV:-production}
@@ -404,6 +492,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1.5G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
 
     environment:
       RAILS_ENV: ${RAILS_ENV:-production}
@@ -455,6 +551,14 @@ services:
     image: pgvector/pgvector:pg16
     pull_policy: always
     restart: "no"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
@@ -479,6 +583,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-core-service-community:latest
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
     environment:
       PORT: "5555"
@@ -526,6 +638,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-processor-community:latest
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 768M
 
     environment:
       POSTGRES_CONNECTION_STRING: postgresql://${POSTGRES_USERNAME:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE:-evo_community}
@@ -580,6 +700,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-bot-runtime:latest
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
     environment:
       LISTEN_ADDR: 0.0.0.0:8080
@@ -615,6 +743,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-flow-community:latest
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1.5G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
     expose:
       - "3334"
 
@@ -682,6 +818,14 @@ services:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-frontend-community:latest
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
 
     environment:
       VITE_APP_ENV: production
@@ -713,6 +857,14 @@ services:
     image: evoapicloud/evolution-api:latest
     pull_policy: always
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 768M
     expose:
       - "8080"
     volumes:
