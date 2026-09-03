@@ -118,6 +118,7 @@ services:
     environment:
       RAILS_ENV: ${RAILS_ENV:-production}
       RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
+      FORCE_SSL: ${FORCE_SSL:-true}
       BACKEND_URL: ${BACKEND_URL}
       FRONTEND_URL: ${FRONTEND_URL}
       CORS_ORIGINS: ${CORS_ORIGINS}
@@ -462,6 +463,7 @@ services:
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      EVO_AI_ENCRYPTION_KEY: ${ENCRYPTION_KEY}  # Same Fernet key as ENCRYPTION_KEY (core/processor) — encrypts AI credentials
       EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
       EVO_AUTH_SERVICE_URL: http://evo-auth:3001
       EVO_AI_CORE_SERVICE_URL: http://evo-core:5555
@@ -539,6 +541,7 @@ services:
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      EVO_AI_ENCRYPTION_KEY: ${ENCRYPTION_KEY}  # Same Fernet key as ENCRYPTION_KEY (core/processor) — encrypts AI credentials
       EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
       EVO_AUTH_SERVICE_URL: http://evo-auth:3001
       EVO_AI_CORE_SERVICE_URL: http://evo-core:5555
@@ -642,6 +645,7 @@ services:
       EVO_AUTH_BASE_URL: http://evo-auth:3001
       AI_PROCESSOR_URL: http://evo-processor:8000
       AI_PROCESSOR_VERSION: ${AI_PROCESSOR_VERSION:-v1}
+      EVO_AUTH_ALLOW_MISSING_PERMISSION_ENDPOINT: ${EVO_AUTH_ALLOW_MISSING_PERMISSION_ENDPOINT:-false}
     depends_on:
       postgres:
         condition: service_healthy
@@ -744,7 +748,8 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       AI_PROCESSOR_URL: http://evo-processor:8000
       BOT_RUNTIME_SECRET: ${BOT_RUNTIME_SECRET}
-      AI_CALL_TIMEOUT_SECONDS: ${AI_CALL_TIMEOUT_SECONDS:-30}
+      AI_CALL_TIMEOUT_SECONDS: ${AI_CALL_TIMEOUT_SECONDS:-90}
+      MEDIA_HOST_ALLOWLIST: ${MEDIA_HOST_ALLOWLIST}  # Host(s) serving incoming media, comma-separated, no scheme/port — must match BACKEND_URL's host
     depends_on:
       redis:
         condition: service_healthy

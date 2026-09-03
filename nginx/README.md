@@ -22,12 +22,9 @@ Full path matrix is in [`default.conf.template`](./default.conf.template).
 ## Configurable upstreams
 
 Each of the five variables above is rendered at container start from an
-environment variable. The defaults below (`evo_auth`, `evo_crm`, …) match the
-underscore service names used by **`internal/review/docker-compose.yml`** (the
-review environment), which is the only stack that runs this gateway against the
-default hostnames.
-
-Two stacks do **not** match these defaults:
+environment variable. The defaults below use underscore service names
+(`evo_auth`, `evo_crm`, …). No stack in this repository runs the gateway
+against them, so both shipped stacks override or bypass them:
 
 - **`docker-compose.yml` (dev)** uses *hyphenated* service names (`evo-auth`,
   `evo-crm`, …) and ships **no gateway** at all — the browser hits each service

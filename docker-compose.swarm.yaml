@@ -15,7 +15,7 @@
 ##        - JWT_SECRET_KEY .......... auth, auth_sidekiq, crm, crm_sidekiq, core
 ##        - EVOAI_CRM_API_TOKEN ..... auth, auth_sidekiq, crm, crm_sidekiq, processor
 ##        - DOORKEEPER_JWT_SECRET_KEY  auth, auth_sidekiq
-##        - ENCRYPTION_KEY .......... core, processor
+##        - ENCRYPTION_KEY .......... core, processor; crm + crm_sidekiq (como EVO_AI_ENCRYPTION_KEY)
 ##        - BOT_RUNTIME_SECRET ...... crm, crm_sidekiq, bot_runtime
 ##        - AUTH_APIKEY_INTEGRATION_LOCAL  crm, crm_sidekiq, evoflow
 ##        - CLICKHOUSE_PASSWORD ..... clickhouse, evoflow
@@ -259,6 +259,7 @@ services:
       - SECRET_KEY_BASE=        # Mesmo valor de SECRET_KEY_BASE usado nos demais serviços
       - JWT_SECRET_KEY=         # Mesmo valor de JWT_SECRET_KEY usado nos demais serviços
       - EVOAI_CRM_API_TOKEN=    # Mesmo valor de EVOAI_CRM_API_TOKEN usado nos demais serviços
+      - EVO_AI_ENCRYPTION_KEY=  # Mesma chave Fernet do ENCRYPTION_KEY (core/processor) — cifra credenciais de IA
 
     ## 🗄️ PostgreSQL
       - POSTGRES_HOST=pgvector
@@ -344,6 +345,7 @@ services:
       - SECRET_KEY_BASE=        # Mesmo valor de SECRET_KEY_BASE usado nos demais serviços
       - JWT_SECRET_KEY=         # Mesmo valor de JWT_SECRET_KEY usado nos demais serviços
       - EVOAI_CRM_API_TOKEN=    # Mesmo valor de EVOAI_CRM_API_TOKEN usado nos demais serviços
+      - EVO_AI_ENCRYPTION_KEY=  # Mesma chave Fernet do ENCRYPTION_KEY (core/processor) — cifra credenciais de IA
 
     ## 🗄️ PostgreSQL
       - POSTGRES_HOST=pgvector
@@ -536,7 +538,12 @@ services:
     ## 🤖 Processor e segurança
       - AI_PROCESSOR_URL=http://evocrm_processor:8000
       - BOT_RUNTIME_SECRET=     # Mesmo valor de BOT_RUNTIME_SECRET usado no evocrm_crm e evocrm_crm_sidekiq
-      - AI_CALL_TIMEOUT_SECONDS=30
+      # CRM-236: um turno com tool faz duas chamadas ao modelo e a cauda do
+      # provedor mede ~20s cada. Valor explicito aqui anula o default do codigo.
+      - AI_CALL_TIMEOUT_SECONDS=90
+      - MEDIA_HOST_ALLOWLIST=   # Host(s) que servem a midia recebida, separados por virgula, sem esquema nem porta.
+                                # Use o host do BACKEND_URL do CRM (o que assina a URL do anexo); sem isso o agente nao recebe midia.
+                                # Ex.: "crm.seudominio.com".
 
     deploy:
       resources:
@@ -688,7 +695,7 @@ services:
   ## e roda as migrations. O banco do CRM (evocrm) não é tocado.
   ## O swarm ignora depends_on → o boot espera o ClickHouse por conta própria.
   evocrm_evoflow:
-    image: evoapicloud/evo-flow-community:develop
+    image: evoapicloud/evo-flow-community:latest
     command:
       - sh
       - -c
