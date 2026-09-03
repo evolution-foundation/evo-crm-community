@@ -118,6 +118,7 @@ services:
     environment:
       RAILS_ENV: ${RAILS_ENV:-production}
       RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
+      FORCE_SSL: ${FORCE_SSL:-true}
       BACKEND_URL: ${BACKEND_URL}
       FRONTEND_URL: ${FRONTEND_URL}
       CORS_ORIGINS: ${CORS_ORIGINS}
@@ -644,6 +645,7 @@ services:
       EVO_AUTH_BASE_URL: http://evo-auth:3001
       AI_PROCESSOR_URL: http://evo-processor:8000
       AI_PROCESSOR_VERSION: ${AI_PROCESSOR_VERSION:-v1}
+      EVO_AUTH_ALLOW_MISSING_PERMISSION_ENDPOINT: ${EVO_AUTH_ALLOW_MISSING_PERMISSION_ENDPOINT:-false}
     depends_on:
       postgres:
         condition: service_healthy
