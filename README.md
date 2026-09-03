@@ -86,10 +86,27 @@ The AutomaLead Community platform is composed of 6 independent services:
 ### Design principles (Community Edition)
 
 - **Single-tenant** — one account, no multi-tenancy overhead
-- **No super-admin** — all configuration via seed data and environment variables
 - **No billing / plans** — all limits removed, features unlocked by default
-- **Role hierarchy**: `account_owner` and `agent` — no intermediate roles
+- **Configuration via seed data and environment variables** — with one exception: installation-level settings (SMTP, Storage, Social Login, OpenAI, Channels, Inbound Email, Frontend Runtime) live in the database, behind `installation_configs.manage`
+- **Role hierarchy** — three seeded roles (`agent`, `account_owner`, `super_admin`), plus any custom role created at runtime — see [Roles](#roles)
 - **Account resolution** via token — no `account-id` header required between services
+
+#### Roles
+
+`db/seeds/rbac.rb` in [`evo-auth-service-community`](./evo-auth-service-community) is the authoritative role model. It seeds three roles:
+
+| Role | Scope | Permissions |
+|---|---|---|
+| `agent` | account | Attendance only — conversations, contacts, pipeline cards. Sees only the inboxes it is a member of |
+| `account_owner` | account | The whole catalog except `accounts.stats` and `installation_configs.manage` |
+| `super_admin` | installation | The whole catalog, including `installation_configs.manage` — the only role that renders Admin Settings and reaches `/api/v1/installation_configs/**` |
+
+Two facts a security review needs, because neither is enforced by the code:
+
+- **`super_admin` has no single-holder guarantee.** The setup wizard grants it to the user it creates, and the `PromoteFirstUserToSuperAdmin` migration grants it to the oldest user of an already-bootstrapped installation. Nothing prevents it being assigned to more — audit `user_roles` for the `super_admin` role key instead of assuming one installation owner.
+- **The seeded three are not the whole set.** `account_owner` holds `roles.create` and `roles.bulk_update_permissions`, so custom roles with arbitrary permission sets can be created at runtime via `POST /api/v1/roles`.
+
+`Role::ADMIN_ROLE_KEYS` (defined in `evo-ai-crm-community`, mirrored in auth and the frontend) is an admin-bypass allowlist, not the role model: it also names legacy `administrator`/`admin` keys the seed never creates, and the three copies disagree.
 
 ### Companion services (independent versioning)
 
