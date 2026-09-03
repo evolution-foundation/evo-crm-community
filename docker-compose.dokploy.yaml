@@ -201,15 +201,7 @@ services:
         condition: service_completed_successfully
       evo-auth:
         condition: service_healthy
-    command:
-      - sh
-      - -c
-      - |
-        set +e
-        bundle exec rails db:schema:load || echo "CRM db:schema:load non-fatal error"
-        bundle exec rails runner "conn = ActiveRecord::Base.connection; pending = conn.migration_context.open.pending_migrations; puts \"Pending migrations before normalize: #{pending.size}\"; pending.each { |m| conn.execute(\"INSERT INTO schema_migrations (version) VALUES ('#{m.version}') ON CONFLICT (version) DO NOTHING\") }; puts \"Pending migrations normalized\";" || echo "CRM normalize migrations non-fatal error"
-        bundle exec rails db:seed || echo "CRM seed skipped (already applied or non-fatal error)"
-        exit 0
+    command: sh -c "(bundle exec rails db:prepare || echo 'CRM db:prepare non-fatal error') && (bundle exec rails db:seed || echo 'CRM seed skipped (already applied or non-fatal error)')"
 
   evo_processor_init:
     image: registry.bellosoft.dev/evolution-foundation/evo-ai-processor-community:latest
