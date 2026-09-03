@@ -260,6 +260,7 @@ services:
       - JWT_SECRET_KEY=         # Mesmo valor de JWT_SECRET_KEY usado nos demais serviços
       - EVOAI_CRM_API_TOKEN=    # Mesmo valor de EVOAI_CRM_API_TOKEN usado nos demais serviços
       - EVO_AI_ENCRYPTION_KEY=  # Mesma chave Fernet do ENCRYPTION_KEY (core/processor) — cifra credenciais de IA
+      - DEFAULT_LOCALE=pt_BR    # Idioma das mensagens de sistema (resolvido/reaberto/etc.); vazio = inglês
 
     ## 🗄️ PostgreSQL
       - POSTGRES_HOST=pgvector
@@ -346,6 +347,7 @@ services:
       - JWT_SECRET_KEY=         # Mesmo valor de JWT_SECRET_KEY usado nos demais serviços
       - EVOAI_CRM_API_TOKEN=    # Mesmo valor de EVOAI_CRM_API_TOKEN usado nos demais serviços
       - EVO_AI_ENCRYPTION_KEY=  # Mesma chave Fernet do ENCRYPTION_KEY (core/processor) — cifra credenciais de IA
+      - DEFAULT_LOCALE=pt_BR    # Idioma das mensagens de sistema (resolvido/reaberto/etc.); vazio = inglês
 
     ## 🗄️ PostgreSQL
       - POSTGRES_HOST=pgvector

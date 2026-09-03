@@ -178,6 +178,13 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
+      # Every API request wraps I18n in this locale (Api::V1::BaseController's
+      # switch_locale_using_default), including the activity messages generated
+      # synchronously in the request that resolves/reopens/reassigns a
+      # conversation. Unset means Rails' :en default -- those messages show in
+      # English regardless of the account's language. Must match a locale file
+      # under config/locales exactly, e.g. pt_BR (underscore, not a hyphen).
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE}
       EVO_AUTH_SERVICE_URL: http://evo-auth:3001
       EVO_AI_CORE_SERVICE_URL: http://evo-core:5555
       BOT_RUNTIME_URL: http://evo-bot-runtime:8080
@@ -457,6 +464,13 @@ services:
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       EVO_AI_ENCRYPTION_KEY: ${ENCRYPTION_KEY}  # Same Fernet key as ENCRYPTION_KEY (core/processor) — encrypts AI credentials
       EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
+      # Every API request wraps I18n in this locale (Api::V1::BaseController's
+      # switch_locale_using_default), including the activity messages generated
+      # synchronously in the request that resolves/reopens/reassigns a
+      # conversation. Unset means Rails' :en default -- those messages show in
+      # English regardless of the account's language. Must match a locale file
+      # under config/locales exactly, e.g. pt_BR (underscore, not a hyphen).
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE}
       EVO_AUTH_SERVICE_URL: http://evo-auth:3001
       EVO_AI_CORE_SERVICE_URL: http://evo-core:5555
       # EvoFlow (Segments screen + contact event tracking). Without these 4 vars
@@ -535,6 +549,13 @@ services:
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       EVO_AI_ENCRYPTION_KEY: ${ENCRYPTION_KEY}  # Same Fernet key as ENCRYPTION_KEY (core/processor) — encrypts AI credentials
       EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN}
+      # Every API request wraps I18n in this locale (Api::V1::BaseController's
+      # switch_locale_using_default), including the activity messages generated
+      # synchronously in the request that resolves/reopens/reassigns a
+      # conversation. Unset means Rails' :en default -- those messages show in
+      # English regardless of the account's language. Must match a locale file
+      # under config/locales exactly, e.g. pt_BR (underscore, not a hyphen).
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE}
       EVO_AUTH_SERVICE_URL: http://evo-auth:3001
       EVO_AI_CORE_SERVICE_URL: http://evo-core:5555
       # EvoFlow — the sidekiq worker emits tracking events too; same values as evo-crm.
