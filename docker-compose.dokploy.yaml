@@ -132,6 +132,7 @@ services:
       DOORKEEPER_JWT_SECRET_KEY: ${DOORKEEPER_JWT_SECRET_KEY}
       DOORKEEPER_JWT_ALGORITHM: ${DOORKEEPER_JWT_ALGORITHM:-hs256}
       DOORKEEPER_JWT_ISS: ${DOORKEEPER_JWT_ISS:-evo-auth-service}
+      OAUTH_TOKEN_EXPIRES_IN: ${OAUTH_TOKEN_EXPIRES_IN:-28800}
       MFA_ISSUER: ${MFA_ISSUER:-EvoCRM}
       MAILER_SENDER_EMAIL: ${MAILER_SENDER_EMAIL:-noreply@evo.local}
       ACTIVE_STORAGE_SERVICE: ${ACTIVE_STORAGE_SERVICE:-local}
@@ -341,6 +342,7 @@ services:
       DOORKEEPER_JWT_SECRET_KEY: ${DOORKEEPER_JWT_SECRET_KEY}
       DOORKEEPER_JWT_ALGORITHM: ${DOORKEEPER_JWT_ALGORITHM:-hs256}
       DOORKEEPER_JWT_ISS: ${DOORKEEPER_JWT_ISS:-evo-auth-service}
+      OAUTH_TOKEN_EXPIRES_IN: ${OAUTH_TOKEN_EXPIRES_IN:-28800}
       MFA_ISSUER: ${MFA_ISSUER:-EvoCRM}
       SIDEKIQ_CONCURRENCY: ${SIDEKIQ_CONCURRENCY:-10}
       MAILER_SENDER_EMAIL: ${MAILER_SENDER_EMAIL:-noreply@evo.local}
@@ -406,6 +408,7 @@ services:
       DOORKEEPER_JWT_SECRET_KEY: ${DOORKEEPER_JWT_SECRET_KEY}
       DOORKEEPER_JWT_ALGORITHM: ${DOORKEEPER_JWT_ALGORITHM:-hs256}
       DOORKEEPER_JWT_ISS: ${DOORKEEPER_JWT_ISS:-evo-auth-service}
+      OAUTH_TOKEN_EXPIRES_IN: ${OAUTH_TOKEN_EXPIRES_IN:-28800}
       MFA_ISSUER: ${MFA_ISSUER:-EvoCRM}
       SIDEKIQ_CONCURRENCY: ${SIDEKIQ_CONCURRENCY:-10}
       MAILER_SENDER_EMAIL: ${MAILER_SENDER_EMAIL:-noreply@evo.local}
@@ -515,7 +518,7 @@ services:
         aliases:
           - evo_crm
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health/live"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/health/live"]
       interval: 30s
       timeout: 10s
       retries: 5

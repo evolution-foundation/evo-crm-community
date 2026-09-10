@@ -141,7 +141,7 @@ services:
       # - STORAGE_REGION=auto
       # - STORAGE_ENDPOINT=https://xxxx.r2.cloudflarestorage.com
 
-      - OAUTH_TOKEN_EXPIRES_IN=28800
+      - OAUTH_TOKEN_EXPIRES_IN=${OAUTH_TOKEN_EXPIRES_IN:-28800}
 
     volumes:
       - evoauth_storage:/app/storage
@@ -221,7 +221,7 @@ services:
       # - STORAGE_REGION=auto
       # - STORAGE_ENDPOINT=https://xxxx.r2.cloudflarestorage.com
 
-      - OAUTH_TOKEN_EXPIRES_IN=28800
+      - OAUTH_TOKEN_EXPIRES_IN=${OAUTH_TOKEN_EXPIRES_IN:-28800}
 
     healthcheck:
       disable: true
