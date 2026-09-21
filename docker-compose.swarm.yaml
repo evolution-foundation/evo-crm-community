@@ -34,7 +34,8 @@
 ##   * um Postgres com a extensão pgvector acessível como host "pgvector"
 ##     na rede "evonet"
 ##
-## As imagens são puxadas do Docker Hub (evoapicloud/*).
+## As imagens são puxadas do registry privado (registry.bellosoft.dev/evolution-foundation/*),
+## publicado por cada repo's bellosoft-release.yml (ou gateway-publish.yml para o gateway).
 ## ============================================================================
 
 services:
@@ -42,7 +43,7 @@ services:
 ## --------------------------- ORION --------------------------- ##
 
   evocrm_gateway:
-    image: evoapicloud/evo-crm-gateway:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-crm-gateway:latest
 
     networks:
       - evonet ## Nome da rede interna
@@ -79,7 +80,7 @@ services:
 ## --------------------------- ORION --------------------------- ##
 
   evocrm_auth:
-    image: evoapicloud/evo-auth-service-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
     command: bash -c "bundle exec rails db:migrate 2>&1 || echo 'Migration had errors, continuing...'; bundle exec rails s -p 3001 -b 0.0.0.0"
 
     networks:
@@ -160,7 +161,7 @@ services:
 ## --------------------------- ORION --------------------------- ##
 
   evocrm_auth_sidekiq:
-    image: evoapicloud/evo-auth-service-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-auth-service-community:latest
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
 
     networks:
@@ -243,7 +244,7 @@ services:
 ## --------------------------- ORION --------------------------- ##
 
   evocrm_crm:
-    image: evoapicloud/evo-ai-crm-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
     command: sh -c "until wget -qO- http://evocrm_auth:3001/health >/dev/null 2>&1; do echo 'Waiting for auth...'; sleep 5; done; bundle exec rails db:migrate 2>&1 || echo 'Migration had errors, continuing...'; bundle exec rails s -p 3000 -b 0.0.0.0"
 
     networks:
@@ -332,7 +333,7 @@ services:
 ## --------------------------- ORION --------------------------- ##
 
   evocrm_crm_sidekiq:
-    image: evoapicloud/evo-ai-crm-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-crm-community:latest
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
 
     networks:
@@ -408,7 +409,7 @@ services:
 ## --------------------------- ORION --------------------------- ##
 
   evocrm_core:
-    image: evoapicloud/evo-ai-core-service-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-core-service-community:latest
 
     networks:
       - evonet ## Nome da rede interna
@@ -458,7 +459,7 @@ services:
 ## --------------------------- ORION --------------------------- ##
 
   evocrm_processor:
-    image: evoapicloud/evo-ai-processor-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-processor-community:latest
     command: sh -c "alembic upgrade head 2>&1 || echo 'Alembic migration had errors, continuing...'; python -m scripts.run_seeders; uvicorn src.main:app --host $$HOST --port $$PORT"
 
     volumes:
@@ -562,7 +563,7 @@ services:
 ## --------------------------- ORION --------------------------- ##
 
   evocrm_frontend:
-    image: evoapicloud/evo-ai-frontend-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-ai-frontend-community:latest
 
     networks:
       - evonet ## Nome da rede interna
@@ -697,7 +698,7 @@ services:
   ## e roda as migrations. O banco do CRM (evocrm) não é tocado.
   ## O swarm ignora depends_on → o boot espera o ClickHouse por conta própria.
   evocrm_evoflow:
-    image: evoapicloud/evo-flow-community:latest
+    image: registry.bellosoft.dev/evolution-foundation/evo-flow-community:latest
     command:
       - sh
       - -c
