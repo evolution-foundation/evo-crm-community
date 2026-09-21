@@ -7,7 +7,7 @@ on:
 jobs:
   validate-compose:
     name: Validate Docker Compose
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, bellosoft]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,7 +22,7 @@ jobs:
 
   lint-dockerfiles:
     name: Lint Dockerfiles
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, bellosoft]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,7 +61,7 @@ jobs:
 
   check-migration-collision:
     name: Check Migration Version Collision (CRM vs auth)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, bellosoft]
     steps:
       - uses: actions/checkout@v4
         with:

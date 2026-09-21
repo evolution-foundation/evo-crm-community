@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   migration-collision:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, X64, Linux, bellosoft]
     steps:
       - name: Checkout (com submódulos)
         uses: actions/checkout@v4
