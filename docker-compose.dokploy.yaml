@@ -962,6 +962,32 @@ services:
         condition: service_healthy
 
   # ---------------------------------------------------------------------------
+  # WAHA (WhatsApp HTTP API) — optional, for self-hosting alongside this stack.
+  # provider_config.base_url on a Channel::Whatsapp('waha') row does not have
+  # to point here; this is a convenience service, not a requirement.
+  # ---------------------------------------------------------------------------
+  waha:
+    image: devlikeapro/waha:latest
+    pull_policy: always
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    expose:
+      - "3000"
+    volumes:
+      - waha_sessions:/app/.sessions
+    environment:
+      WAHA_API_KEY: ${WAHA_API_KEY}
+      WHATSAPP_HOOK_URL: ${BACKEND_URL}/webhooks/whatsapp/waha
+      WHATSAPP_HOOK_EVENTS: "message,session.status"
+
+  # ---------------------------------------------------------------------------
   # n8n (queue mode: editor + worker + webhook) — dedicated 'n8n' schema in the
   # shared postgres DB, dedicated Redis DB index for its Bull queue.
   # ---------------------------------------------------------------------------
@@ -1138,5 +1164,6 @@ volumes:
   crm_storage:
   auth_storage:
   evolution_data:
+  waha_sessions:
   n8n_data:
   n8n_files:
