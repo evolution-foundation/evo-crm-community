@@ -984,8 +984,11 @@ services:
       - waha_sessions:/app/.sessions
     environment:
       WAHA_API_KEY: ${WAHA_API_KEY}
-      WHATSAPP_HOOK_URL: ${BACKEND_URL}/webhooks/whatsapp/waha
-      WHATSAPP_HOOK_EVENTS: "message,session.status"
+      # No WHATSAPP_HOOK_URL/WHATSAPP_HOOK_EVENTS here: registering a global
+      # webhook here AND the per-session webhook that WahaConcern#create_waha_session
+      # registers at channel-creation time would deliver every event twice.
+      # The per-session webhook is the correct one (it's per-channel and
+      # carries the channel's own HMAC secret) — see waha_concern.rb.
 
   # ---------------------------------------------------------------------------
   # n8n (queue mode: editor + worker + webhook) — dedicated 'n8n' schema in the
