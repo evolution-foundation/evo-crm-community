@@ -45,10 +45,13 @@ AI_PROCESSOR_API_KEY:hex32
 AUTH_APIKEY_INTEGRATION_LOCAL:hex32
 "
 
-# Last occurrence wins, as in docker compose; surrounding quotes are dropped.
+# Read like docker compose does: last occurrence wins, an inline ` # comment`
+# and surrounding quotes are not part of the value.
 current_value() {
   local value
-  value=$(grep -E "^$1=" "$ENV_FILE" | tail -n 1 | cut -d= -f2- | tr -d '\r')
+  value=$({ grep -E "^$1=" "$ENV_FILE" || true; } | tail -n 1 | cut -d= -f2- | tr -d '\r')
+  value="${value%%[[:space:]]#*}"
+  value="${value%"${value##*[![:space:]]}"}"
   value="${value#\"}"; value="${value%\"}"
   value="${value#\'}"; value="${value%\'}"
   printf '%s' "$value"
