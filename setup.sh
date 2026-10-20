@@ -71,6 +71,13 @@ else
   fail "Git is not installed. Install it from https://git-scm.com/downloads"
 fi
 
+# OpenSSL (generates the secrets in .env)
+if command -v openssl > /dev/null 2>&1; then
+  success "OpenSSL found: $(openssl version)"
+else
+  fail "OpenSSL is not installed. It is needed to generate the secrets in .env."
+fi
+
 # Docker
 if command -v docker > /dev/null 2>&1; then
   success "Docker found: $(docker --version)"
@@ -134,6 +141,8 @@ info "Configuring environment..."
 
 if [ -f .env ]; then
   warn ".env file already exists."
+  warn "Overwriting generates new secrets, including a new ENCRYPTION_KEY: saved AI credentials"
+  warn "and encrypted admin settings become unreadable, and users have to sign in again."
   read -r -p "  Overwrite with defaults? [y/N] " response
   case "$response" in
     [yY][eE][sS]|[yY])
@@ -148,6 +157,8 @@ else
   cp .env.example .env
   success "Created .env from .env.example"
 fi
+
+bash scripts/generate-secrets.sh .env
 
 echo ""
 

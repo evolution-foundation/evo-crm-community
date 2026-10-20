@@ -27,8 +27,7 @@ There are exactly **two** supported ways to run the stack:
 ```bash
 git clone --recurse-submodules https://github.com/evolution-foundation/evo-crm-community.git
 cd evo-crm-community
-cp .env.example .env        # defaults work out of the box — no edits needed
-make setup                  # builds images, starts infra, seeds the DB, boots everything
+make setup                  # creates .env with fresh secrets, builds, starts infra, seeds the DB, boots everything
 ```
 
 Or run the interactive script, which does the same steps with prompts:
@@ -36,6 +35,27 @@ Or run the interactive script, which does the same steps with prompts:
 ```bash
 bash setup.sh
 ```
+
+### Secrets
+
+`.env.example` ships every secret as `CHANGE_ME`. Both `make setup` and
+`setup.sh` generate them on the way in (`scripts/generate-secrets.sh`, which
+needs only `openssl`), so each installation gets its own values. The script
+only fills values that are `CHANGE_ME`, empty or missing, so running it again
+never rotates anything. If you create `.env` by hand, run it yourself before
+`docker compose up`:
+
+```bash
+cp .env.example .env
+bash scripts/generate-secrets.sh
+```
+
+If `ENCRYPTION_KEY`, `BOT_RUNTIME_SECRET`, `AUTH_APIKEY_INTEGRATION_LOCAL` or
+`EVOAI_CRM_API_TOKEN` is missing or empty, `docker compose` refuses to start and
+names the variable; it no longer falls back to a value published in this
+repository. `docker compose` does **not** reject the literal `CHANGE_ME`, so a
+hand-copied `.env` that skipped the script starts with a public placeholder as
+every secret.
 
 ### First access
 
