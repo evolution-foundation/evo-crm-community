@@ -21,18 +21,27 @@ check() {
   if "$@"; then echo "ok   $label"; else echo "::error::FAIL $label"; failures=$((failures + 1)); fi
 }
 
+SECRET_NAMES="SECRET_KEY_BASE JWT_SECRET_KEY DOORKEEPER_JWT_SECRET_KEY ENCRYPTION_KEY
+EVOAI_CRM_API_TOKEN BOT_RUNTIME_SECRET AI_PROCESSOR_API_KEY AUTH_APIKEY_INTEGRATION_LOCAL"
+
 value() { grep "^$1=" "$2" | tail -n 1 | cut -d= -f2-; }
-no_placeholder() { ! grep -q '=CHANGE_ME' "$1"; }
+all_filled() {
+  local name v
+  for name in $SECRET_NAMES; do
+    v=$(value "$name" "$1" | tr -d '\r')
+    [ -n "$v" ] && [ "$v" != CHANGE_ME ] || { echo "     $name is not filled"; return 1; }
+  done
+}
 same() { [ "$1" = "$2" ]; }
 differ() { [ "$1" != "$2" ]; }
 fernet_ok() { python3 -c 'import base64, sys; assert len(base64.urlsafe_b64decode(sys.argv[1])) == 32' "$1"; }
 mode_600() { [ "$(stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1")" = 600 ]; }
 
-# Fresh install: every placeholder filled, pair equal, valid Fernet, private file.
+# Fresh install: every secret filled, JWT key independent, valid Fernet, private file.
 cp "$EXAMPLE" a.env
 bash "$SCRIPT" a.env > /dev/null
-check "fresh install leaves no CHANGE_ME" no_placeholder a.env
-check "SECRET_KEY_BASE equals JWT_SECRET_KEY" same "$(value SECRET_KEY_BASE a.env)" "$(value JWT_SECRET_KEY a.env)"
+check "fresh install fills every secret" all_filled a.env
+check "JWT_SECRET_KEY differs from SECRET_KEY_BASE" differ "$(value SECRET_KEY_BASE a.env)" "$(value JWT_SECRET_KEY a.env)"
 check "ENCRYPTION_KEY is a Fernet key" fernet_ok "$(value ENCRYPTION_KEY a.env)"
 check ".env is mode 600" mode_600 a.env
 
@@ -46,10 +55,10 @@ cp "$EXAMPLE" b.env
 bash "$SCRIPT" b.env > /dev/null
 check "installations get different tokens" differ "$(value EVOAI_CRM_API_TOKEN a.env)" "$(value EVOAI_CRM_API_TOKEN b.env)"
 
-# A pair half the script cannot edit must not be split from the other half.
-printf 'export SECRET_KEY_BASE=abc\nJWT_SECRET_KEY=CHANGE_ME\n' > c.env
+# A value the script cannot edit is not overridden by an appended line.
+printf 'export JWT_SECRET_KEY=abc\n' > c.env
 bash "$SCRIPT" c.env > /dev/null 2>&1
-check "export-form pair half keeps JWT_SECRET_KEY untouched" same "$(value JWT_SECRET_KEY c.env)" "CHANGE_ME"
+check "export-form value is not overridden" same "$(grep -c '^JWT_SECRET_KEY=' c.env)" 0
 
 # Compose trims the value, so a padded placeholder is still a placeholder.
 printf 'EVOAI_CRM_API_TOKEN= CHANGE_ME\n' > d.env

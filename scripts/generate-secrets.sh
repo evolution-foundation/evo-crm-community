@@ -2,7 +2,7 @@
 # =============================================================================
 # Evo CRM Community — Secret generation
 # =============================================================================
-# Fills every secret in an env file that is still CHANGE_ME, empty or missing
+# Fills every secret in an env file that is still empty, CHANGE_ME or missing
 # with a freshly generated value. Secrets that already hold a value are kept,
 # so running it again never rotates anything.
 #
@@ -34,11 +34,9 @@ chmod 600 "$ENV_FILE"
 #   hex32 / hex64  hex only, so no `$`, `#` or quotes reach compose interpolation
 #   fernet         URL-safe base64 of 32 bytes; `openssl rand -hex 32` is not a
 #                  valid Fernet key and the processor fails to save credentials
-#   jwt            one value shared by SECRET_KEY_BASE and JWT_SECRET_KEY: auth
-#                  signs with the first, core-service validates with the second
 SECRETS="
-SECRET_KEY_BASE:jwt
-JWT_SECRET_KEY:jwt
+SECRET_KEY_BASE:hex64
+JWT_SECRET_KEY:hex64
 DOORKEEPER_JWT_SECRET_KEY:hex64
 ENCRYPTION_KEY:fernet
 EVOAI_CRM_API_TOKEN:hex32
@@ -79,34 +77,15 @@ generate() {
     hex32)  value=$(openssl rand -hex 32) || true ;;
     hex64)  value=$(openssl rand -hex 64) || true ;;
     fernet) value=$(openssl rand -base64 32 | tr '+/' '-_') || true ;;
-    jwt)    value="$JWT_VALUE" ;;
   esac
   [ -n "$value" ] || fail "could not generate a value for $2."
   printf '%s' "$value"
 }
 
-SKB_VALUE=$(current_value SECRET_KEY_BASE)
-JWT_CURRENT=$(current_value JWT_SECRET_KEY)
-PAIR_LOCKED=""
-if in_other_form SECRET_KEY_BASE || in_other_form JWT_SECRET_KEY; then
-  # current_value cannot see that half, so generating the other would split the pair.
-  PAIR_LOCKED=1
-  warn "SECRET_KEY_BASE or JWT_SECRET_KEY is in $ENV_FILE in a form this script does not edit."
-  warn "Neither was generated: set both by hand, to the same value."
-elif is_placeholder "$SKB_VALUE" && is_placeholder "$JWT_CURRENT"; then
-  JWT_VALUE=$(generate hex64 SECRET_KEY_BASE)
-elif is_placeholder "$SKB_VALUE" || is_placeholder "$JWT_CURRENT"; then
-  # The pair must stay equal, so the half that is set wins. That does not rotate it.
-  if is_placeholder "$SKB_VALUE"; then JWT_VALUE="$JWT_CURRENT"; else JWT_VALUE="$SKB_VALUE"; fi
-  warn "SECRET_KEY_BASE and JWT_SECRET_KEY must match: copying the one already set."
-  warn "To rotate them, set BOTH to CHANGE_ME and run this script again."
-fi
-
 generated=""
 for entry in $SECRETS; do
   name="${entry%%:*}"
   format="${entry#*:}"
-  [ "$format" = jwt ] && [ -n "$PAIR_LOCKED" ] && continue
 
   if editable "$name"; then
     is_placeholder "$(current_value "$name")" || continue

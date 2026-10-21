@@ -16,6 +16,15 @@ jobs:
       - name: Test scripts/generate-secrets.sh
         run: bash .github/scripts/test-generate-secrets.sh
 
+      - name: Unfilled .env.example must not start
+        run: |
+          cp .env.example .env
+          if docker compose config --quiet 2> compose.err; then
+            echo "::error::docker compose accepted .env.example without generated secrets"
+            exit 1
+          fi
+          grep -q "must be set in .env" compose.err
+
       - name: Seed .env from example
         run: |
           cp .env.example .env
