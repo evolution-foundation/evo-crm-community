@@ -13,8 +13,13 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Test scripts/generate-secrets.sh
+        run: bash .github/scripts/test-generate-secrets.sh
+
       - name: Seed .env from example
-        run: cp .env.example .env
+        run: |
+          cp .env.example .env
+          bash scripts/generate-secrets.sh .env
 
       - name: Validate docker-compose.yml
         run: docker compose config --quiet

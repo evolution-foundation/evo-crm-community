@@ -27,6 +27,8 @@ warn() { echo "[WARN]  $1" >&2; }
 
 command -v openssl > /dev/null 2>&1 || fail "openssl is required to generate secrets."
 [ -f "$ENV_FILE" ] || fail "$ENV_FILE not found."
+# umask only covers files created here; .env usually comes from a plain `cp`.
+chmod 600 "$ENV_FILE"
 
 # NAME:FORMAT — to generate one more secret, add a line here.
 #   hex32 / hex64  hex only, so no `$`, `#` or quotes reach compose interpolation
@@ -50,6 +52,7 @@ AUTH_APIKEY_INTEGRATION_LOCAL:hex32
 current_value() {
   local value
   value=$({ grep -E "^$1=" "$ENV_FILE" || true; } | tail -n 1 | cut -d= -f2- | tr -d '\r')
+  value="${value#"${value%%[![:space:]]*}"}"
   value="${value%%[[:space:]]#*}"
   value="${value%"${value##*[![:space:]]}"}"
   value="${value#\"}"; value="${value%\"}"
@@ -59,6 +62,15 @@ current_value() {
 
 is_placeholder() {
   [ -z "$1" ] || [ "$1" = "CHANGE_ME" ]
+}
+
+editable() {
+  grep -qE "^$1=" "$ENV_FILE"
+}
+
+# Declared as `export NAME=` or `NAME = `: compose reads it, this script does not edit it.
+in_other_form() {
+  ! editable "$1" && grep -qE "^[[:space:]]*(export[[:space:]]+)?$1[[:space:]]*=" "$ENV_FILE"
 }
 
 generate() {
@@ -75,7 +87,13 @@ generate() {
 
 SKB_VALUE=$(current_value SECRET_KEY_BASE)
 JWT_CURRENT=$(current_value JWT_SECRET_KEY)
-if is_placeholder "$SKB_VALUE" && is_placeholder "$JWT_CURRENT"; then
+PAIR_LOCKED=""
+if in_other_form SECRET_KEY_BASE || in_other_form JWT_SECRET_KEY; then
+  # current_value cannot see that half, so generating the other would split the pair.
+  PAIR_LOCKED=1
+  warn "SECRET_KEY_BASE or JWT_SECRET_KEY is in $ENV_FILE in a form this script does not edit."
+  warn "Neither was generated: set both by hand, to the same value."
+elif is_placeholder "$SKB_VALUE" && is_placeholder "$JWT_CURRENT"; then
   JWT_VALUE=$(generate hex64 SECRET_KEY_BASE)
 elif is_placeholder "$SKB_VALUE" || is_placeholder "$JWT_CURRENT"; then
   # The pair must stay equal, so the half that is set wins. That does not rotate it.
@@ -88,8 +106,9 @@ generated=""
 for entry in $SECRETS; do
   name="${entry%%:*}"
   format="${entry#*:}"
+  [ "$format" = jwt ] && [ -n "$PAIR_LOCKED" ] && continue
 
-  if grep -qE "^$name=" "$ENV_FILE"; then
+  if editable "$name"; then
     is_placeholder "$(current_value "$name")" || continue
     value=$(generate "$format" "$name")
     NAME="$name" VALUE="$value" awk '
@@ -97,7 +116,7 @@ for entry in $SECRETS; do
       { print }
     ' "$ENV_FILE" > "$TMP_FILE"
     cat "$TMP_FILE" > "$ENV_FILE"
-  elif grep -qE "^[[:space:]]*(export[[:space:]]+)?$name[[:space:]]*=" "$ENV_FILE"; then
+  elif in_other_form "$name"; then
     # Appending a second line would override the user's value in compose.
     warn "$name is in $ENV_FILE in a form this script does not edit; set it by hand."
     continue
