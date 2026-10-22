@@ -52,6 +52,13 @@ cp a.env a.first
 bash "$SCRIPT" a.env > /dev/null
 check "second run leaves the file unchanged" cmp -s a.env a.first
 
+# An .env from before EVOAI_AUTH_API_TOKEN existed gains only that line.
+grep -v '^EVOAI_AUTH_API_TOKEN=' a.first > e.env
+cp e.env e.before
+bash "$SCRIPT" e.env > /dev/null
+check "old .env gains EVOAI_AUTH_API_TOKEN" all_filled e.env
+check "old .env keeps its other values" cmp -s e.before <(grep -v '^EVOAI_AUTH_API_TOKEN=' e.env)
+
 # Two installations do not share values.
 cp "$EXAMPLE" b.env
 bash "$SCRIPT" b.env > /dev/null

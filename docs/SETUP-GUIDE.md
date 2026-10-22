@@ -59,7 +59,9 @@ the script therefore does not start.
 The two service tokens are separate credentials: `EVOAI_CRM_API_TOKEN` is what
 other services send to call the CRM, and `EVOAI_AUTH_API_TOKEN` is what the CRM
 sends to call the auth service. The script generates a different value for
-each. Setting both to the same value by hand also works.
+each. Setting both to the same value by hand also works, but then every service
+that holds the CRM token (processor, evo-flow) can also call the auth as a
+service; keep them different unless you need the compatibility.
 
 ### First access
 
@@ -123,7 +125,11 @@ The Swarm stack (`docker-compose.swarm.yaml`) uses **inline** values — it does
 1. Edit `docker-compose.swarm.yaml` directly: replace `SUBDOMAIN_API` /
    `SUBDOMAIN_FRONTEND` with your domains, fill every empty secret (using the
    **same** value everywhere each secret appears), set the Postgres password,
-   and SMTP/S3 if used.
+   and SMTP/S3 if used. Until the CRM image contains
+   [evo-ai-crm-community#450](https://github.com/evolution-foundation/evo-ai-crm-community/pull/450),
+   give `EVOAI_AUTH_API_TOKEN` the same value as `EVOAI_CRM_API_TOKEN`: an older
+   CRM still sends that one to the auth, and a different value makes every
+   permission check fail.
 2. Create the external network/volumes and a pgvector Postgres reachable as
    host `pgvector` on the `evonet` network (full list is in the file header).
 3. Deploy:
