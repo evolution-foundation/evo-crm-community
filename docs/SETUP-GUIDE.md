@@ -50,11 +50,16 @@ cp .env.example .env
 bash scripts/generate-secrets.sh
 ```
 
-If `ENCRYPTION_KEY`, `BOT_RUNTIME_SECRET`, `AUTH_APIKEY_INTEGRATION_LOCAL` or
-`EVOAI_CRM_API_TOKEN` is missing or empty, `docker compose` refuses to start and
-names the variable; it no longer falls back to a value published in this
-repository. A hand-copied `.env` that skipped the script therefore does not
-start.
+If `ENCRYPTION_KEY`, `BOT_RUNTIME_SECRET`, `AUTH_APIKEY_INTEGRATION_LOCAL`,
+`EVOAI_CRM_API_TOKEN` or `EVOAI_AUTH_API_TOKEN` is missing or empty,
+`docker compose` refuses to start and names the variable; it no longer falls
+back to a value published in this repository. A hand-copied `.env` that skipped
+the script therefore does not start.
+
+The two service tokens are separate credentials: `EVOAI_CRM_API_TOKEN` is what
+other services send to call the CRM, and `EVOAI_AUTH_API_TOKEN` is what the CRM
+sends to call the auth service. The script generates a different value for
+each. Setting both to the same value by hand also works.
 
 ### First access
 

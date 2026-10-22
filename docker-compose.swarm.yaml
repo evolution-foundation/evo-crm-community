@@ -13,7 +13,8 @@
 ##      serviços não se autenticam entre si. Mapeamento:
 ##        - SECRET_KEY_BASE ......... auth, auth_sidekiq, crm, crm_sidekiq, core, processor
 ##        - JWT_SECRET_KEY .......... auth, auth_sidekiq, crm, crm_sidekiq, core
-##        - EVOAI_CRM_API_TOKEN ..... auth, auth_sidekiq, crm, crm_sidekiq, processor
+##        - EVOAI_CRM_API_TOKEN ..... crm, crm_sidekiq, processor, evoflow
+##        - EVOAI_AUTH_API_TOKEN .... auth, auth_sidekiq, crm, crm_sidekiq
 ##        - DOORKEEPER_JWT_SECRET_KEY  auth, auth_sidekiq
 ##        - ENCRYPTION_KEY .......... core, processor; crm + crm_sidekiq (como EVO_AI_ENCRYPTION_KEY)
 ##        - BOT_RUNTIME_SECRET ...... crm, crm_sidekiq, bot_runtime
@@ -86,7 +87,7 @@ services:
     ## 🔐 Segredos e tokens — gere uma vez e repita o MESMO valor em todos os serviços
       - SECRET_KEY_BASE=        # Chave secreta do Rails. Ex.: gere com "openssl rand -hex 64"
       - JWT_SECRET_KEY=         # Segredo de assinatura dos JWT. Ex.: gere com "openssl rand -hex 32"
-      - EVOAI_CRM_API_TOKEN=    # Token interno entre CRM e serviços. Ex.: gere com "openssl rand -hex 32"
+      - EVOAI_AUTH_API_TOKEN=   # Token que o CRM usa para falar com o auth. Ex.: gere com "openssl rand -hex 32". Sem ele o auth não sobe
 
     ## 🗄️ PostgreSQL
       - POSTGRES_HOST=pgvector  # Host/serviço do Postgres na rede (dependência externa com pgvector)
@@ -159,7 +160,7 @@ services:
     ## 🔐 Segredos e tokens — use os MESMOS valores do serviço evocrm_auth
       - SECRET_KEY_BASE=        # Mesmo valor de SECRET_KEY_BASE usado nos demais serviços
       - JWT_SECRET_KEY=         # Mesmo valor de JWT_SECRET_KEY usado nos demais serviços
-      - EVOAI_CRM_API_TOKEN=    # Mesmo valor de EVOAI_CRM_API_TOKEN usado nos demais serviços
+      - EVOAI_AUTH_API_TOKEN=   # Mesmo valor de EVOAI_AUTH_API_TOKEN usado nos demais serviços
 
     ## 🗄️ PostgreSQL
       - POSTGRES_HOST=pgvector
@@ -238,6 +239,7 @@ services:
       - SECRET_KEY_BASE=        # Mesmo valor de SECRET_KEY_BASE usado nos demais serviços
       - JWT_SECRET_KEY=         # Mesmo valor de JWT_SECRET_KEY usado nos demais serviços
       - EVOAI_CRM_API_TOKEN=    # Mesmo valor de EVOAI_CRM_API_TOKEN usado nos demais serviços
+      - EVOAI_AUTH_API_TOKEN=   # Mesmo valor de EVOAI_AUTH_API_TOKEN usado nos demais serviços
       - EVO_AI_ENCRYPTION_KEY=  # Mesma chave Fernet do ENCRYPTION_KEY (core/processor) — cifra credenciais de IA
 
     ## 🗄️ PostgreSQL
@@ -317,6 +319,7 @@ services:
       - SECRET_KEY_BASE=        # Mesmo valor de SECRET_KEY_BASE usado nos demais serviços
       - JWT_SECRET_KEY=         # Mesmo valor de JWT_SECRET_KEY usado nos demais serviços
       - EVOAI_CRM_API_TOKEN=    # Mesmo valor de EVOAI_CRM_API_TOKEN usado nos demais serviços
+      - EVOAI_AUTH_API_TOKEN=   # Mesmo valor de EVOAI_AUTH_API_TOKEN usado nos demais serviços
       - EVO_AI_ENCRYPTION_KEY=  # Mesma chave Fernet do ENCRYPTION_KEY (core/processor) — cifra credenciais de IA
 
     ## 🗄️ PostgreSQL

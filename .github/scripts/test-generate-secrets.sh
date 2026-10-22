@@ -22,7 +22,8 @@ check() {
 }
 
 SECRET_NAMES="SECRET_KEY_BASE JWT_SECRET_KEY DOORKEEPER_JWT_SECRET_KEY ENCRYPTION_KEY
-EVOAI_CRM_API_TOKEN BOT_RUNTIME_SECRET AI_PROCESSOR_API_KEY AUTH_APIKEY_INTEGRATION_LOCAL"
+EVOAI_CRM_API_TOKEN EVOAI_AUTH_API_TOKEN BOT_RUNTIME_SECRET AI_PROCESSOR_API_KEY
+AUTH_APIKEY_INTEGRATION_LOCAL"
 
 value() { grep "^$1=" "$2" | tail -n 1 | cut -d= -f2-; }
 all_filled() {
@@ -42,6 +43,7 @@ cp "$EXAMPLE" a.env
 bash "$SCRIPT" a.env > /dev/null
 check "fresh install fills every secret" all_filled a.env
 check "JWT_SECRET_KEY differs from SECRET_KEY_BASE" differ "$(value SECRET_KEY_BASE a.env)" "$(value JWT_SECRET_KEY a.env)"
+check "EVOAI_AUTH_API_TOKEN differs from EVOAI_CRM_API_TOKEN" differ "$(value EVOAI_CRM_API_TOKEN a.env)" "$(value EVOAI_AUTH_API_TOKEN a.env)"
 check "ENCRYPTION_KEY is a Fernet key" fernet_ok "$(value ENCRYPTION_KEY a.env)"
 check ".env is mode 600" mode_600 a.env
 

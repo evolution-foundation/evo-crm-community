@@ -71,6 +71,9 @@ services:
       RAILS_ENV: ${RAILS_ENV:-development}
       REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/1
       POSTGRES_HOST: postgres
+      # The auth accepts only this token in X-Service-Token and refuses to boot
+      # without it. The CRM sends the same variable, so evo-crm gets it too.
+      EVOAI_AUTH_API_TOKEN: ${EVOAI_AUTH_API_TOKEN:?EVOAI_AUTH_API_TOKEN must be set in .env (run bash scripts/generate-secrets.sh)}
       # EVO-1999: this service's command already runs db:create && db:migrate, and
       # the image migrates on boot (entrypoint). RUN_MIGRATIONS=false avoids doubling.
       RUN_MIGRATIONS: "false"
@@ -99,6 +102,7 @@ services:
       RAILS_ENV: ${RAILS_ENV:-development}
       REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/1
       POSTGRES_HOST: postgres
+      EVOAI_AUTH_API_TOKEN: ${EVOAI_AUTH_API_TOKEN:?EVOAI_AUTH_API_TOKEN must be set in .env (run bash scripts/generate-secrets.sh)}
       # EVO-1999: sidekiq must not run migrations (the web service already covers it).
       RUN_MIGRATIONS: "false"
     depends_on:
@@ -131,6 +135,8 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/0
       POSTGRES_HOST: postgres
       EVO_AUTH_SERVICE_URL: http://evo-auth:3001
+      # Sent in X-Service-Token on permission checks; must match the auth's value.
+      EVOAI_AUTH_API_TOKEN: ${EVOAI_AUTH_API_TOKEN:?EVOAI_AUTH_API_TOKEN must be set in .env (run bash scripts/generate-secrets.sh)}
       EVO_AI_CORE_SERVICE_URL: http://evo-core:5555
       # Same Fernet key core/processor read as ENCRYPTION_KEY; the CRM encrypts AI credentials with it.
       EVO_AI_ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set in .env (run bash scripts/generate-secrets.sh)}
@@ -176,6 +182,7 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/0
       POSTGRES_HOST: postgres
       EVO_AUTH_SERVICE_URL: http://evo-auth:3001
+      EVOAI_AUTH_API_TOKEN: ${EVOAI_AUTH_API_TOKEN:?EVOAI_AUTH_API_TOKEN must be set in .env (run bash scripts/generate-secrets.sh)}
       EVO_AI_CORE_SERVICE_URL: http://evo-core:5555
       # Same Fernet key core/processor read as ENCRYPTION_KEY; the CRM encrypts AI credentials with it.
       EVO_AI_ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set in .env (run bash scripts/generate-secrets.sh)}
