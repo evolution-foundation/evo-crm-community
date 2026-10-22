@@ -74,5 +74,15 @@ printf 'EVOAI_CRM_API_TOKEN= CHANGE_ME\n' > d.env
 bash "$SCRIPT" d.env > /dev/null
 check "padded CHANGE_ME is replaced" same "$(value EVOAI_CRM_API_TOKEN d.env | grep -c CHANGE_ME)" 0
 
+# An .env from before CRM-828 keeps its values, but the script names the public ones.
+printf '%s\n' 'SECRET_KEY_BASE=a]i9F#k2$$Lm7Nq0R!sT4uW6xZ8bD1eG3hJ5oP7rV9yAcE2fH4jM6pS8vX0zB3dK5nQ7tU9wY1' \
+  'EVOAI_CRM_API_TOKEN=6e10e689-58ce-4416-bf0d-f5818bf2dcf8' > f.env
+cp f.env f.before
+bash "$SCRIPT" f.env > /dev/null 2> f.err
+check "published values are kept" cmp -s f.before <(head -n 2 f.env)
+check "published values are reported" grep -q "published in this repository: SECRET_KEY_BASE EVOAI_CRM_API_TOKEN$" f.err
+bash "$SCRIPT" a.env > /dev/null 2> a.err
+check "generated values are not reported" same "$(grep -c published a.err)" 0
+
 [ "$failures" -eq 0 ] || { echo "$failures check(s) failed"; exit 1; }
 echo "all checks passed"

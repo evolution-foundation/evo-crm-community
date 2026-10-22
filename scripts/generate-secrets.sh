@@ -46,6 +46,17 @@ AI_PROCESSOR_API_KEY:hex32
 AUTH_APIKEY_INTEGRATION_LOCAL:hex32
 "
 
+# What .env.example shipped before CRM-828. An .env copied back then still holds
+# these, and they are public. Not rotated here: ENCRYPTION_KEY and SECRET_KEY_BASE
+# take saved credentials and sessions with them, so the operator decides.
+PUBLISHED='a]i9F#k2$$Lm7Nq0R!sT4uW6xZ8bD1eG3hJ5oP7rV9yAcE2fH4jM6pS8vX0zB3dK5nQ7tU9wY1
+a]i9F#k2$Lm7Nq0R!sT4uW6xZ8bD1eG3hJ5oP7rV9yAcE2fH4jM6pS8vX0zB3dK5nQ7tU9wY1
+XoQPOBw2FrzjQS11utERG9qO2MsAnXFxlhIns_uUxRk=
+6e10e689-58ce-4416-bf0d-f5818bf2dcf8
+evoflow-dev-key
+evo-bot-runtime-dev-secret
+evo-processor-dev-api-key'
+
 # Read like docker compose does: last occurrence wins, an inline ` # comment`
 # and surrounding quotes are not part of the value.
 current_value() {
@@ -61,6 +72,10 @@ current_value() {
 
 is_placeholder() {
   [ -z "$1" ] || [ "$1" = "CHANGE_ME" ]
+}
+
+is_published() {
+  grep -qxF -- "$1" <<< "$PUBLISHED"
 }
 
 editable() {
@@ -84,12 +99,17 @@ generate() {
 }
 
 generated=""
+published=""
 for entry in $SECRETS; do
   name="${entry%%:*}"
   format="${entry#*:}"
 
   if editable "$name"; then
-    is_placeholder "$(current_value "$name")" || continue
+    current=$(current_value "$name")
+    if ! is_placeholder "$current"; then
+      if is_published "$current"; then published="$published $name"; fi
+      continue
+    fi
     value=$(generate "$format" "$name")
     NAME="$name" VALUE="$value" awk '
       index($0, ENVIRON["NAME"] "=") == 1 { print ENVIRON["NAME"] "=" ENVIRON["VALUE"]; next }
@@ -113,4 +133,9 @@ if [ -n "$generated" ]; then
   echo "Generated secrets in $ENV_FILE:$generated"
 else
   echo "All secrets in $ENV_FILE already set, nothing generated"
+fi
+
+if [ -n "$published" ]; then
+  warn "These secrets in $ENV_FILE still hold a value published in this repository:$published"
+  warn "Rotate them as CHANGELOG.md describes. Rotating ENCRYPTION_KEY makes saved AI credentials unreadable."
 fi

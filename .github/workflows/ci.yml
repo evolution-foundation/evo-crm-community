@@ -33,6 +33,18 @@ jobs:
       - name: Validate docker-compose.yml
         run: docker compose config --quiet
 
+      - name: Every generated secret is required by compose
+        run: bash .github/scripts/test-compose-guards.sh
+
+      - name: CRM submodule sends the auth its own token
+        # CRM-829: generate-secrets.sh gives EVOAI_AUTH_API_TOKEN its own value. A CRM
+        # that still sends EVOAI_CRM_API_TOKEN gets a 401 and every RBAC check denies.
+        run: |
+          if ! grep -q "ENV\['EVOAI_AUTH_API_TOKEN'\]" evo-ai-crm-community/app/services/evo_auth_service.rb; then
+            echo "::error::evo-ai-crm-community does not send EVOAI_AUTH_API_TOKEN to the auth; bump it to a commit with evo-ai-crm-community#450"
+            exit 1
+          fi
+
   lint-dockerfiles:
     name: Lint Dockerfiles
     runs-on: ubuntu-latest
