@@ -12,7 +12,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DATABASE:-evo_community}
       POSTGRES_USER: ${POSTGRES_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-evoai_dev_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-postgres}"]
       interval: 5s
@@ -23,13 +23,16 @@ services:
   redis:
     image: redis:alpine
     restart: unless-stopped
-    command: ["sh", "-c", "redis-server --requirepass ${REDIS_PASSWORD:-evoai_redis_pass} --appendonly yes"]
+    command: ["sh", "-c", "redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)} --appendonly yes"]
     ports:
       - "56381:6379"
     volumes:
       - redis_data:/data
+    environment:
+      # Read by redis-cli, so the healthcheck and setup.sh authenticate without the password in argv.
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-evoai_redis_pass}", "ping"]
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -49,6 +52,9 @@ services:
     restart: unless-stopped
     ports:
       - "55672:5672"
+    environment:
+      RABBITMQ_DEFAULT_USER: evoflow
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
@@ -69,10 +75,9 @@ services:
     env_file: .env
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/1
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}@redis:6379/1
       POSTGRES_HOST: postgres
-      # The auth accepts only this token in X-Service-Token and refuses to boot
-      # without it. The CRM sends the same variable, so evo-crm gets it too.
+      # The CRM sends this token to the auth, so evo-crm gets it too.
       EVOAI_AUTH_API_TOKEN: ${EVOAI_AUTH_API_TOKEN:?EVOAI_AUTH_API_TOKEN must be set in .env (run bash scripts/generate-secrets.sh)}
       # Also in env_file; repeated here so an emptied value stops compose instead
       # of signing with an empty key.
@@ -104,7 +109,7 @@ services:
     env_file: .env
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/1
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}@redis:6379/1
       POSTGRES_HOST: postgres
       EVOAI_AUTH_API_TOKEN: ${EVOAI_AUTH_API_TOKEN:?EVOAI_AUTH_API_TOKEN must be set in .env (run bash scripts/generate-secrets.sh)}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:?SECRET_KEY_BASE must be set in .env (run bash scripts/generate-secrets.sh)}
@@ -138,7 +143,7 @@ services:
     env_file: .env
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}@redis:6379/0
       POSTGRES_HOST: postgres
       EVO_AUTH_SERVICE_URL: http://evo-auth:3001
       # Sent in X-Service-Token on permission checks; must match the auth's value.
@@ -186,7 +191,7 @@ services:
     env_file: .env
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}@redis:6379/0
       POSTGRES_HOST: postgres
       EVO_AUTH_SERVICE_URL: http://evo-auth:3001
       EVOAI_AUTH_API_TOKEN: ${EVOAI_AUTH_API_TOKEN:?EVOAI_AUTH_API_TOKEN must be set in .env (run bash scripts/generate-secrets.sh)}
@@ -234,7 +239,7 @@ services:
       DB_HOST: postgres
       DB_PORT: "5432"
       DB_USER: ${POSTGRES_USERNAME:-postgres}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-evoai_dev_password}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}
       DB_NAME: ${POSTGRES_DATABASE:-evo_community}
       DB_SSLMODE: disable
       PORT: "5555"
@@ -266,10 +271,10 @@ services:
       - "8011:8000"
     env_file: .env
     environment:
-      POSTGRES_CONNECTION_STRING: postgresql://${POSTGRES_USERNAME:-postgres}:${POSTGRES_PASSWORD:-evoai_dev_password}@postgres:5432/${POSTGRES_DATABASE:-evo_community}
+      POSTGRES_CONNECTION_STRING: postgresql://${POSTGRES_USERNAME:-postgres}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}@postgres:5432/${POSTGRES_DATABASE:-evo_community}
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-evoai_redis_pass}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}
       REDIS_SSL: "false"
       HOST: 0.0.0.0
       PORT: "8000"
@@ -307,7 +312,7 @@ services:
     env_file: .env
     environment:
       LISTEN_ADDR: 0.0.0.0:8080
-      REDIS_URL: redis://:${REDIS_PASSWORD:-evoai_redis_pass}@redis:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}@redis:6379
       AI_PROCESSOR_URL: http://evo-processor:8000
       BOT_RUNTIME_SECRET: ${BOT_RUNTIME_SECRET:?BOT_RUNTIME_SECRET must be set in .env (run bash scripts/generate-secrets.sh)}
       # Hosts allowed to serve incoming media. Must cover the host the CRM signs
@@ -337,7 +342,7 @@ services:
       - "19000:9000"
     environment:
       CLICKHOUSE_USER: default
-      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}
       CLICKHOUSE_DB: default
     volumes:
       - clickhouse_data:/var/lib/clickhouse
@@ -346,7 +351,7 @@ services:
         soft: 262144
         hard: 262144
     healthcheck:
-      test: ["CMD", "clickhouse-client", "--user", "default", "--password", "password", "--query", "SELECT 1"]
+      test: ["CMD", "clickhouse-client", "--user", "default", "--password", "${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}", "--query", "SELECT 1"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -385,7 +390,7 @@ services:
       # The global BrokerModule still boots in api/direct mode and connects, so a
       # broker is required even though ingestion writes straight to ClickHouse.
       BROKER_TYPE: rabbitmq
-      RABBITMQ_URL: amqp://rabbitmq:5672
+      RABBITMQ_URL: amqp://evoflow:${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}@rabbitmq:5672
       AUTH_APIKEY_INTEGRATION_LOCAL: ${AUTH_APIKEY_INTEGRATION_LOCAL:?AUTH_APIKEY_INTEGRATION_LOCAL must be set in .env (run bash scripts/generate-secrets.sh)}
       EVO_AUTH_SERVICE_URL: http://evo-auth:3001
       EVO_AUTH_VALIDATE_TOKEN_ENDPOINT: /api/v1/auth/validate
@@ -393,18 +398,18 @@ services:
       CLICKHOUSE_PORT: "8123"
       CLICKHOUSE_DATABASE: evo_campaign
       CLICKHOUSE_USERNAME: default
-      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}
       CLICKHOUSE_TABLE: contact_events
       # Redis (token/session cache + health). Without these the app falls back to
       # 127.0.0.1 and the auth client can fail → spurious 401s.
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-evoai_redis_pass}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}
       REDIS_DB: "4"
       POSTGRES_DB_HOST: postgres
       POSTGRES_DB_PORT: "5432"
       POSTGRES_DB_USERNAME: ${POSTGRES_USERNAME:-postgres}
-      POSTGRES_DB_PASSWORD: ${POSTGRES_PASSWORD:-evoai_dev_password}
+      POSTGRES_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env (run bash scripts/generate-secrets.sh)}
       POSTGRES_DB_DATABASE: evo_campaign
       EVOAI_CRM_BASE_URL: http://evo-crm:3000
       EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN:?EVOAI_CRM_API_TOKEN must be set in .env (run bash scripts/generate-secrets.sh)}

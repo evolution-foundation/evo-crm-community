@@ -143,6 +143,8 @@ if [ -f .env ]; then
   warn ".env file already exists."
   warn "Overwriting generates new secrets, including a new ENCRYPTION_KEY: saved AI credentials"
   warn "and encrypted admin settings become unreadable, and users have to sign in again."
+  warn "It also generates a new POSTGRES_PASSWORD, which an existing database volume does not"
+  warn "accept: keep .env, or remove the volumes first (docker compose down -v) and lose the data."
   read -r -p "  Overwrite with defaults? [y/N] " response
   case "$response" in
     [yY][eE][sS]|[yY])
@@ -194,7 +196,7 @@ success "PostgreSQL is ready"
 
 info "Waiting for Redis to be ready..."
 retries=0
-until docker compose exec -T redis redis-cli -a evoai_redis_pass ping > /dev/null 2>&1; do
+until docker compose exec -T redis redis-cli ping 2> /dev/null | grep -q PONG; do
   retries=$((retries + 1))
   if [ "$retries" -ge "$max_retries" ]; then
     fail "Redis did not become ready in time. Check: docker compose logs redis"

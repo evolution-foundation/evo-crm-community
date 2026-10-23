@@ -44,18 +44,25 @@ EVOAI_AUTH_API_TOKEN:hex32
 BOT_RUNTIME_SECRET:hex32
 AI_PROCESSOR_API_KEY:hex32
 AUTH_APIKEY_INTEGRATION_LOCAL:hex32
+POSTGRES_PASSWORD:hex32
+REDIS_PASSWORD:hex32
+CLICKHOUSE_PASSWORD:hex32
+RABBITMQ_PASSWORD:hex32
 "
 
-# What .env.example shipped before CRM-828. An .env copied back then still holds
+# What .env.example shipped before per-install secrets. An .env copied back then still holds
 # these, and they are public. Not rotated here: ENCRYPTION_KEY and SECRET_KEY_BASE
-# take saved credentials and sessions with them, so the operator decides.
+# take saved credentials and sessions with them, and an existing database volume
+# keeps the password it was created with, so the operator decides.
 PUBLISHED='a]i9F#k2$$Lm7Nq0R!sT4uW6xZ8bD1eG3hJ5oP7rV9yAcE2fH4jM6pS8vX0zB3dK5nQ7tU9wY1
 a]i9F#k2$Lm7Nq0R!sT4uW6xZ8bD1eG3hJ5oP7rV9yAcE2fH4jM6pS8vX0zB3dK5nQ7tU9wY1
 XoQPOBw2FrzjQS11utERG9qO2MsAnXFxlhIns_uUxRk=
 6e10e689-58ce-4416-bf0d-f5818bf2dcf8
 evoflow-dev-key
 evo-bot-runtime-dev-secret
-evo-processor-dev-api-key'
+evo-processor-dev-api-key
+evoai_dev_password
+evoai_redis_pass'
 
 # Read like docker compose does: last occurrence wins, an inline ` # comment`
 # and surrounding quotes are not part of the value.

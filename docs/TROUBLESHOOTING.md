@@ -51,6 +51,15 @@ docker compose logs evo-core
 The Core needs Postgres reachable as host `postgres`; if it crashes on boot,
 verify the `postgres` service is healthy (`docker compose ps`).
 
+## Services fail with `password authentication failed for user "postgres"`
+
+The Postgres volume was created with another password than the one in `.env`,
+usually because `.env` was recreated (or `setup.sh` overwrote it) while the
+volume from an earlier install was kept. Postgres only reads
+`POSTGRES_PASSWORD` when the volume is first created. Put the old value back in
+`.env`, or, if you can lose the data, run `docker compose down -v` and set up
+again.
+
 ## Login wizard doesn't appear / "account already exists"
 
 There is no pre-seeded login. The first user is created at

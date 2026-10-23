@@ -59,9 +59,15 @@ the script therefore does not start.
 The two service tokens are separate credentials: `EVOAI_CRM_API_TOKEN` is what
 other services send to call the CRM, and `EVOAI_AUTH_API_TOKEN` is what the CRM
 sends to call the auth service. The script generates a different value for
-each. Setting both to the same value by hand also works, but then every service
-that holds the CRM token (processor, evo-flow) can also call the auth as a
-service; keep them different unless you need the compatibility.
+each. Setting both to the same value by hand also works; keep them different
+unless you need the compatibility, so each token opens only the service it is
+meant for.
+
+The Postgres, Redis, ClickHouse and RabbitMQ passwords are generated the same
+way. Postgres stores its password in the data volume when it is first created,
+so a new `.env` against an existing volume fails with `password authentication
+failed`: keep the `.env` that created the volume, or start over with
+`docker compose down -v` (this deletes the data).
 
 ### First access
 

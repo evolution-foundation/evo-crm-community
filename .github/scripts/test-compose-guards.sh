@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Every secret scripts/generate-secrets.sh generates must stop docker compose when
-# it is missing (CRM-828). Compose names only the first missing variable, so each
+# it is missing. Compose names only the first missing variable, so each
 # one is removed on its own. Needs docker and an .env in the repository root
 # (env_file); runs in CI after the .env is seeded.
 #
@@ -23,6 +23,20 @@ docker compose --env-file "$WORK/full.env" config --quiet \
   || { echo "::error::docker compose rejects a generated .env"; exit 1; }
 
 failures=0
+
+# No published value may survive as a fallback or a literal anywhere in the rendered stack,
+# nor ClickHouse's old fixed password or a RabbitMQ URL without credentials.
+published=$(tr -d '\r' < "$(dirname "$0")/published-values.txt")
+docker compose --env-file "$WORK/full.env" config > "$WORK/rendered.yml"
+leaks=$({ grep -oF -- "$published" "$WORK/rendered.yml"; grep -nE '(: |- )password$|amqp://[^@]+$' "$WORK/rendered.yml"; } || true)
+if [ -n "$leaks" ]; then
+  echo "::error::FAIL the rendered compose still holds a published or default credential:"
+  echo "$leaks"
+  failures=$((failures + 1))
+else
+  echo "ok   no published or default credential in the rendered compose"
+fi
+
 names=$(sed -n '/^SECRETS="/,/^"/p' "$GENERATOR" | grep : | cut -d: -f1)
 for name in $names; do
   case " $UNGUARDED " in *" $name "*) continue ;; esac

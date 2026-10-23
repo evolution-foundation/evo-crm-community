@@ -89,7 +89,7 @@ services:
     ## 🔐 Segredos e tokens — gere uma vez e repita o MESMO valor em todos os serviços
       - SECRET_KEY_BASE=        # Chave secreta do Rails. Ex.: gere com "openssl rand -hex 64"
       - JWT_SECRET_KEY=         # Segredo de assinatura dos JWT. Ex.: gere com "openssl rand -hex 32"
-      - EVOAI_AUTH_API_TOKEN=   # Token que o CRM usa para falar com o auth. Ex.: gere com "openssl rand -hex 32". Sem ele o auth não sobe. Veja a nota do cabeçalho sobre a imagem do CRM
+      - EVOAI_AUTH_API_TOKEN=   # O CRM manda este token ao auth. Ex.: gere com "openssl rand -hex 32". Veja a nota do cabeçalho sobre a imagem do CRM
 
     ## 🗄️ PostgreSQL
       - POSTGRES_HOST=pgvector  # Host/serviço do Postgres na rede (dependência externa com pgvector)
