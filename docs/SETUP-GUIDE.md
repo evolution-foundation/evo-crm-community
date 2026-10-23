@@ -27,8 +27,7 @@ There are exactly **two** supported ways to run the stack:
 ```bash
 git clone --recurse-submodules https://github.com/evolution-foundation/evo-crm-community.git
 cd evo-crm-community
-cp .env.example .env        # defaults work out of the box — no edits needed
-make setup                  # builds images, starts infra, seeds the DB, boots everything
+make setup                  # creates .env with fresh secrets, builds, starts infra, seeds the DB, boots everything
 ```
 
 Or run the interactive script, which does the same steps with prompts:
@@ -36,6 +35,39 @@ Or run the interactive script, which does the same steps with prompts:
 ```bash
 bash setup.sh
 ```
+
+### Secrets
+
+`.env.example` ships every secret empty. Both `make setup` and `setup.sh`
+generate them on the way in (`scripts/generate-secrets.sh`, which needs only
+`openssl`), so each installation gets its own values. The script only fills
+values that are empty, `CHANGE_ME` or missing, so running it again never
+rotates anything. If you create `.env` by hand, run it yourself before
+`docker compose up`:
+
+```bash
+cp .env.example .env
+bash scripts/generate-secrets.sh
+```
+
+If any secret it generates is missing or empty (`AI_PROCESSOR_API_KEY` aside,
+which no service in the compose reads), `docker compose` refuses to start and
+names the variable; it no longer falls
+back to a value published in this repository. A hand-copied `.env` that skipped
+the script therefore does not start.
+
+The two service tokens are separate credentials: `EVOAI_CRM_API_TOKEN` is what
+other services send to call the CRM, and `EVOAI_AUTH_API_TOKEN` is what the CRM
+sends to call the auth service. The script generates a different value for
+each. Setting both to the same value by hand also works; keep them different
+unless you need the compatibility, so each token opens only the service it is
+meant for.
+
+The Postgres, Redis, ClickHouse and RabbitMQ passwords are generated the same
+way. Postgres stores its password in the data volume when it is first created,
+so a new `.env` against an existing volume fails with `password authentication
+failed`: keep the `.env` that created the volume, or start over with
+`docker compose down -v` (this deletes the data).
 
 ### First access
 
@@ -99,7 +131,11 @@ The Swarm stack (`docker-compose.swarm.yaml`) uses **inline** values — it does
 1. Edit `docker-compose.swarm.yaml` directly: replace `SUBDOMAIN_API` /
    `SUBDOMAIN_FRONTEND` with your domains, fill every empty secret (using the
    **same** value everywhere each secret appears), set the Postgres password,
-   and SMTP/S3 if used.
+   and SMTP/S3 if used. Until the CRM image contains
+   [evo-ai-crm-community#450](https://github.com/evolution-foundation/evo-ai-crm-community/pull/450),
+   give `EVOAI_AUTH_API_TOKEN` the same value as `EVOAI_CRM_API_TOKEN`: an older
+   CRM still sends that one to the auth, and a different value makes every
+   permission check fail.
 2. Create the external network/volumes and a pgvector Postgres reachable as
    host `pgvector` on the `evonet` network (full list is in the file header).
 3. Deploy:
