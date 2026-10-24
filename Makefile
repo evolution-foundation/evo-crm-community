@@ -36,6 +36,7 @@ setup: ## First-time setup: copy env, build, start, seed
 	else \
 		echo ".env already exists, skipping copy"; \
 	fi
+	@bash scripts/generate-secrets.sh .env
 	@git submodule update --init --recursive
 	docker compose build
 	docker compose up -d postgres redis mailhog
