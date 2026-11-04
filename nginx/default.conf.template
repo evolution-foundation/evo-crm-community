@@ -271,8 +271,10 @@ server {
     # =============================================================================
     # EvoAI Core Service Routes
     # =============================================================================
-    # Agent-specific integration endpoints
-    location ~ ^/api/v1/agents/[^/]+/integrations/ {
+    # Agent-specific OAuth integration endpoints -> processor. Only the providers
+    # the processor implements; every other provider (dify, flowise, ...) is
+    # persisted by the core and falls through to the core block below.
+    location ~ ^/api/v1/agents/[^/]+/integrations/(asana|atlassian|canva|github|google-calendar|google-sheets|hubspot|linear|monday|notion|paypal|supabase)(/|$) {
         proxy_pass $processor_service$request_uri;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -288,7 +290,7 @@ server {
         proxy_set_header Connection "upgrade";
     }
 
-    location ~ ^/api/v1/(agents|folders|mcp-servers|custom-mcp-servers|custom-tools) {
+    location ~ ^/api/v1/(agents|folders|mcp-servers|custom-mcp-servers|custom-tools|integration-credentials|integrations/knowledge-nexus) {
         proxy_pass $evoai_service$request_uri;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
