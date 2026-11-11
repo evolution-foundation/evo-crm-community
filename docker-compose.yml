@@ -150,6 +150,7 @@ services:
       EVOAI_AUTH_API_TOKEN: ${EVOAI_AUTH_API_TOKEN:?EVOAI_AUTH_API_TOKEN must be set in .env (run bash scripts/generate-secrets.sh)}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:?SECRET_KEY_BASE must be set in .env (run bash scripts/generate-secrets.sh)}
       EVO_AI_CORE_SERVICE_URL: http://evo-core:5555
+      EVO_AI_PROCESSOR_URL: ${AI_PROCESSOR_URL:-http://evo-processor:8000}
       # Same Fernet key core/processor read as ENCRYPTION_KEY; the CRM encrypts AI credentials with it.
       EVO_AI_ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set in .env (run bash scripts/generate-secrets.sh)}
       BOT_RUNTIME_URL: http://evo-bot-runtime:8080
@@ -197,6 +198,7 @@ services:
       EVOAI_AUTH_API_TOKEN: ${EVOAI_AUTH_API_TOKEN:?EVOAI_AUTH_API_TOKEN must be set in .env (run bash scripts/generate-secrets.sh)}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:?SECRET_KEY_BASE must be set in .env (run bash scripts/generate-secrets.sh)}
       EVO_AI_CORE_SERVICE_URL: http://evo-core:5555
+      EVO_AI_PROCESSOR_URL: ${AI_PROCESSOR_URL:-http://evo-processor:8000}
       # Same Fernet key core/processor read as ENCRYPTION_KEY; the CRM encrypts AI credentials with it.
       EVO_AI_ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set in .env (run bash scripts/generate-secrets.sh)}
       BOT_RUNTIME_URL: http://evo-bot-runtime:8080
