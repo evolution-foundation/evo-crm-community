@@ -255,9 +255,10 @@ services:
     ## 🧊 Redis
       - REDIS_URL=redis://evocrm_redis:6379/1
 
-    ## 🔗 Serviços internos (Auth + Core)
+    ## 🔗 Serviços internos (Auth + Core + Processor)
       - EVO_AUTH_SERVICE_URL=http://evocrm_auth:3001
       - EVO_AI_CORE_SERVICE_URL=http://evocrm_core:5555
+      - EVO_AI_PROCESSOR_URL=http://evocrm_processor:8000
 
     ## 🔀 EvoFlow (tela de Segments + tracking de eventos do contato) — porta 3334
     ## Sem estas 4 variáveis o CRM levanta EvoFlow::ConfigurationError e /api/v1/segments responde 500.
@@ -335,9 +336,10 @@ services:
     ## 🧊 Redis
       - REDIS_URL=redis://evocrm_redis:6379/1
 
-    ## 🔗 Serviços internos (Auth + Core)
+    ## 🔗 Serviços internos (Auth + Core + Processor)
       - EVO_AUTH_SERVICE_URL=http://evocrm_auth:3001
       - EVO_AI_CORE_SERVICE_URL=http://evocrm_core:5555
+      - EVO_AI_PROCESSOR_URL=http://evocrm_processor:8000
 
     ## 🔀 EvoFlow — o sidekiq emite os eventos de tracking; mesmos valores do evocrm_crm.
       - EVO_FLOW_ENABLED=true
